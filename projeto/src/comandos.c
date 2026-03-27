@@ -1,25 +1,5 @@
-#ifndef COMANDOS
-#define COMANDOS
+#include "comandos.h"
 
-#define ARGS_LIM 5
-#define ARGS_TAM 256
-
-typedef enum {
-    CMD_UNKNOWN = -1,          /**< Comando inexistente. */
-    CMD_EXEC = 1,               /**< Comando para executar (-e). */
-    CMD_CONSULTA = 2,           /**< Comando para consultar comandos em execução (-c). */
-    CMD_OFF = 3,            /**< Comando de terminação do controller (-d). */
-} TipoComando;
-
-/**
- * @struct Comando
- * @brief Estrutura que caracteriza um comando e os seus argumentos.
- */
-typedef struct Comando {
-    TipoComando tipo;                        /**< Tipo do comando. */
-    int num_args;                            /**< Número de argumentos do comando verdadeiramente armazenados. */
-    char args[ARGS_LIM][ARGS_TAM];       /**< Lista de argumentos do comando. */
-} Comando;
 
 const char* stringComando(TipoComando tipo){
     if (tipo == CMD_EXEC) return "Executar comando";
@@ -28,13 +8,36 @@ const char* stringComando(TipoComando tipo){
     else return "Comando desconhecido";
 }
 
-TipoComando verificaTipo(char *tipo, int numArgs) {
+TipoComando verificaTipo(char *tipo) {
     if (strcmp(tipo, "-e") == 0) return CMD_EXEC;
     if (strcmp(tipo, "-c") == 0) return CMD_CONSULTA;
     if (strcmp(tipo, "-d") == 0) return CMD_OFF;
     return CMD_UNKNOWN;
 }
 
-Comando criaComando()
+Comando criaComando(int argc, char *argv[]) {
 
-#endif
+    Comando cmd;
+    cmd.num_args = 0;
+    cmd.tipo = verificaTipo(argv[1]);
+
+    for (int i = 2; i < argc && cmd.num_args < ARGS_LIM; i++) {
+        strcpy(cmd.args[cmd.num_args], argv[i]);
+        cmd.args[cmd.num_args][ARGS_LIM - 1] = '\0';
+        cmd.num_args++;
+    }
+
+    return cmd;
+}
+
+TipoComando get_tipo(Comando *c){
+    return c->tipo;
+}
+
+int get_numArgs(Comando *c){
+    return c->num_args;
+}
+
+char** get_args(Comando *c){
+    return c->args;
+}
