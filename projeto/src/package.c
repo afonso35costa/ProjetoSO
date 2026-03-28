@@ -1,6 +1,9 @@
 #include "package.h"
 #include "comandos.h"
 #include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
+#include <string.h>
 
 
 void package_init(Package *pkg, Comando *cmd) {
@@ -13,7 +16,8 @@ void package_init(Package *pkg, Comando *cmd) {
         return;
     }
     pkg->comando = *cmd;
-    pkg->status = 0;
+    pkg->status = WAITING;
+    pkg->arrival_time = time(NULL);
     memset(pkg->fifo_runner, 0, NAME_FIFO);  // Inicializar o nome do FIFO
 }
 
@@ -28,7 +32,12 @@ int get_status(Package *p){
     if (p) {
         return p->status;
     }
-    return NULL;
+    return 0;
+}
+
+int get_time(Package *p){
+    if (p) return p->arrival_time;
+    return 0;
 }
 
 void set_comando(Comando *c, Package *p){

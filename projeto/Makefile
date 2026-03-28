@@ -14,7 +14,7 @@ folders:
 bin/controller: obj/controller.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
-bin/runner: obj/runner.o
+bin/runner: obj/runner.o obj/comandos.o obj/package.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 obj/%.o: src/%.c

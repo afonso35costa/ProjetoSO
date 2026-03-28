@@ -1,7 +1,7 @@
 #ifndef COMANDOS
 #define COMANDOS
 
-#define ARGS_LIM 5
+#define ARGS_LIM 64
 #define ARGS_TAM 256
 
 typedef enum {
@@ -19,6 +19,7 @@ typedef struct Comando {
     TipoComando tipo;                        /**< Tipo do comando. */
     int num_args;                            /**< Número de argumentos do comando verdadeiramente armazenados. */
     char args[ARGS_LIM][ARGS_TAM];       /**< Lista de argumentos do comando. */
+    int userId;
 } Comando;
 
 const char* stringComando(TipoComando tipo);
@@ -27,6 +28,7 @@ Comando criaComando(int argc, char *argv[]);
 
 TipoComando get_tipo(Comando *c);
 int get_numArgs(Comando *c);
-char** get_args(Comando *c);
+char* get_arg_porIndice(Comando *c, int index);
+int get_userId(Comando *c);
 
 #endif
