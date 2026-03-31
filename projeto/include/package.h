@@ -8,7 +8,7 @@ typedef enum{
     RUNNING = 1, // quando o comando recebe autorização para executar
 } PackageStatus;
 
-typedef struct package{
+typedef struct {
     Comando comando;
     char fifo_runner[NAME_FIFO];
     PackageStatus status;

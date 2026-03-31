@@ -50,5 +50,11 @@ void set_status(int status, Package *p){
     if (p) p->status = status;
 }
 
+void set_fifo(char* fifo, Package *p){
+    if (fifo && p){
+        strcpy(p->fifo_runner, fifo);
+    }
+}
+
 
 
