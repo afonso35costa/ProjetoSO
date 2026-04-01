@@ -1,9 +1,9 @@
 #ifndef QUEUE
 #define QUEUE
-#include "comandos.h"
+#include "package.h"
 
 typedef struct Node{
-    Comando cmd;
+    Package pkg;
     struct Node *next;
 } Node;
 
@@ -13,7 +13,7 @@ typedef struct {
     int   size;
 } Queue;
 
-void enqueue(Queue *q, Comando *cmd);
-Comando dequeue(Queue *q);
+void enqueue(Queue *q, Package *pkg);
+Package dequeue(Queue *q);
 
 #endif

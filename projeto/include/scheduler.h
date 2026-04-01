@@ -1,5 +1,5 @@
 #ifndef EXEC
-#include "comandos.h"
+#include "package.h"
 #include "queue.h"
 
 typedef enum{
@@ -11,7 +11,7 @@ typedef enum{
 
 typedef struct {
     SchedPolicies policy;
-    Comando* arrayComandos;
+    Package* arrayPackages;
     Queue* filaEspera;
     int comandosParalelo;
     int executions;

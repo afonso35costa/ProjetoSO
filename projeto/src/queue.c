@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include "queue.h"
+#include "package.h"
 
-void enqueue(Queue *q, Comando *cmd) {
+void enqueue(Queue *q, Package *pkg) {
     Node *novo = malloc(sizeof(Node));
-    novo->cmd  = *cmd;
+    novo->pkg  = *pkg;
     novo->next = NULL;
     if (q->tail == NULL) {
         q->head = novo;
@@ -15,13 +16,13 @@ void enqueue(Queue *q, Comando *cmd) {
     q->size++;
 }
 
-Comando dequeue(Queue *q) {
+Package dequeue(Queue *q) {
     Node   *tmp = q->head;
-    Comando cmd = tmp->cmd;
+    Package pkg = tmp->pkg;
     q->head = q->head->next;
     if (q->head == NULL)
         q->tail = NULL;
     free(tmp);
     q->size--;
-    return cmd;
+    return pkg;
 }

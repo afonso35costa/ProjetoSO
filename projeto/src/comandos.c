@@ -48,6 +48,3 @@ int get_userId(Comando *c){
     return c->userId;
 }
 
-void addComandoArray (Comando* cmds, int nr_cmds, Comando *cmd){
-    cmds[nr_cmds] = *cmd;
-}

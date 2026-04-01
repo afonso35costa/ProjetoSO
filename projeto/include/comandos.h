@@ -31,6 +31,4 @@ int get_numArgs(Comando *c);
 char* get_arg_porIndice(Comando *c, int index);
 int get_userId(Comando *c);
 
-void addComandoArray (Comando* cmds, int nr_cmds, Comando *cmd);
-
 #endif

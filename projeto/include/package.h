@@ -1,4 +1,5 @@
 #ifndef PACKAGE
+#define PACKAGE
 #include "comandos.h"
 
 #define NAME_FIFO 256 // TAMANHO MAXIMO DO FIFO
@@ -24,5 +25,7 @@ int get_time(Package *p);
 
 void set_comando(Comando *c, Package *p);
 void set_status(int status, Package *p);
+
+void addPackageArray (Package* pkgs, int nr_cmds, Package *pkg);
 
 #endif

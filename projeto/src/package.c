@@ -56,5 +56,9 @@ void set_fifo(char* fifo, Package *p){
     }
 }
 
+void addPackageArray (Package* pkgs, int nr_cmds, Package *pkg){
+    pkgs[nr_cmds] = *pkg;
+}
+
 
 

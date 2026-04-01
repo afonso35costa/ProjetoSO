@@ -53,11 +53,10 @@ int main(int argc, char* argv[]){
 		if ((nbytes = read(fd_controller, &pkg, sizeof(pkg))) > 0){
 			pid_t pidFilho = fork();
 			if (pidFilho == 0){
-                Comando *cmd = get_comando(&pkg);
 
                 //Adicionar comando ao array ou à fila de espera
-                if (s.executions < s.comandosParalelo) addComandoArray(s.arrayComandos, s.executions, cmd);
-                else enqueue(s.filaEspera, cmd);
+                if (s.executions < s.comandosParalelo) addPackageArray(s.arrayPackages, s.executions, &pkg);
+                else enqueue(s.filaEspera, &pkg);
 
 				// Executar o escalonamento
 				
