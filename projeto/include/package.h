@@ -1,6 +1,7 @@
 #ifndef PACKAGE
 #define PACKAGE
 #include "comandos.h"
+#include <fcntl.h>
 
 #define NAME_FIFO 256 // TAMANHO MAXIMO DO FIFO
 
@@ -14,14 +15,20 @@ typedef struct {
     char fifo_runner[NAME_FIFO];
     PackageStatus status;
     int arrival_time;
+    pid_t pid;
 } Package;
 
+typedef struct{
+    int comando_id;
+    int user_id;
+} InfoComando;
 
 void package_init(Package *pkg, Comando *cmd);
 
 Comando* get_comando(Package *p);
 int get_status(Package *p);
 int get_time(Package *p);
+pid_t get_pid(Package *p);
 
 void set_comando(Comando *c, Package *p);
 void set_status(int status, Package *p);

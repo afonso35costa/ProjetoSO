@@ -4,6 +4,8 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 
 void package_init(Package *pkg, Comando *cmd) {
@@ -18,6 +20,7 @@ void package_init(Package *pkg, Comando *cmd) {
     pkg->comando = *cmd;
     pkg->status = WAITING;
     pkg->arrival_time = time(NULL);
+    pkg->pid = getpid();
     memset(pkg->fifo_runner, 0, NAME_FIFO);  // Inicializar o nome do FIFO
 }
 
@@ -37,6 +40,11 @@ int get_status(Package *p){
 
 int get_time(Package *p){
     if (p) return p->arrival_time;
+    return 0;
+}
+
+pid_t get_pid(Package *p){
+    if (p) return p->pid;
     return 0;
 }
 

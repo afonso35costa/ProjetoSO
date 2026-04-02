@@ -16,6 +16,16 @@ void enqueue(Queue *q, Package *pkg) {
     q->size++;
 }
 
+void push_head(Queue *q, Package *pkg) {
+    Node *novo = malloc(sizeof(Node));
+    novo->pkg  = *pkg;
+    novo->next = q->head;
+    q->head = novo;
+    if (q->tail == NULL)
+        q->tail = novo;
+    q->size++;
+}
+
 Package dequeue(Queue *q) {
     Node   *tmp = q->head;
     Package pkg = tmp->pkg;

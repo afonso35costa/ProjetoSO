@@ -14,6 +14,7 @@ typedef struct {
 } Queue;
 
 void enqueue(Queue *q, Package *pkg);
+void push_head(Queue *q, Package *pkg);
 Package dequeue(Queue *q);
 
 #endif

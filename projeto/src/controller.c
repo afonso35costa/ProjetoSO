@@ -22,7 +22,12 @@ void controller_enviaAutorizacao(const char* fifo_controllerToRunner, char* auto
     close(fd_runner);
 }
 
+
 int main(int argc, char* argv[]){
+    if (argc < 3) {
+        printf("<ParallellComands> e <SchedPolicy> necessários\n");
+        return 0;
+    }
     Scheduler s;
     Queue q;
     schedInit(&s, &q, argv[1], argv[2]);
