@@ -1,4 +1,5 @@
-#ifndef EXEC
+#ifndef SCHEDULER
+#define SCHEDULER
 #include "package.h"
 #include "queue.h"
 
@@ -19,5 +20,6 @@ typedef struct {
 
 void schedInit(Scheduler *s, Queue *q, const char* a1, const char* a2);
 void policyExists(int policy);
+Package firstComeFirstServe(Scheduler* s);
 
 #endif

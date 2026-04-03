@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include "package.h"
 #include "comandos.h"
+#include "executer.h"
 
 void runner_enviaPackage (const char* fifo_controllerToRunner, Package *p) {
     // FIFO para enviar a mensagem para o controller
@@ -27,11 +28,13 @@ void runner_enviaPackage (const char* fifo_controllerToRunner, Package *p) {
         unlink(fifo_controllerToRunner);
         exit(1);
     }
+    if (p->comando.tipo == CMD_EXEC){
+        char buffer1[256];
+        int n1 = sprintf(buffer1, "[runner] command %d submitted\n", p->pid);
+        write(1, &buffer1, n1);
+    }
 
     close(fd_controller);
-    char buffer[256];
-    int n = sprintf(buffer, "[runner] command %d submitted\n", getpid());
-    write(1, buffer, n);
 }
 
 void runner_recebeAutorizacao (const char* fifo_controllerToRunner){
@@ -93,13 +96,15 @@ int main(int argc, char* argv[]){
     runner_enviaPackage(fifo_controllerToRunner, &p);
     runner_recebeAutorizacao(fifo_controllerToRunner);
 
+    //Executar o comando
+    int fd = open(fifo_controllerToRunner, O_RDONLY);
+    executerMain(&cmd, fd);
 
-    //ALGURES AQUI VOU EXECUTAR O COMANDO
-
-
-    char buffer[256];
-    int n = sprintf(buffer, "[runner] command %d finished\n", getpid());
-    write(1, buffer, n);
+    if (p.comando.tipo == CMD_EXEC){
+        char buffer[256];
+        int n = sprintf(buffer, "[runner] command %d finished\n", getpid());
+        write(1, buffer, n);
+    }
 
     return 0;
 }

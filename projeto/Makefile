@@ -11,10 +11,10 @@ runner: bin/runner
 folders:
 	@mkdir -p src include obj bin tmp
 
-bin/controller: obj/controller.o obj/scheduler.o obj/comandos.o obj/queue.o obj/package.o
+bin/controller: obj/controller.o obj/scheduler.o obj/comandos.o obj/queue.o obj/package.o obj/executer.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
-bin/runner: obj/runner.o obj/comandos.o obj/package.o
+bin/runner: obj/runner.o obj/comandos.o obj/package.o obj/executer.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 obj/%.o: src/%.c

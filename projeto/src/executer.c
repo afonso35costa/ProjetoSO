@@ -1,10 +1,24 @@
 #include <unistd.h>
+#include <stdio.h>
 #include "comandos.h"
 #include "package.h"
 #include "queue.h"
+#include "scheduler.h"
 
 void executaComando(Comando *c){
-    execvp(c->args[0], c->args);
+    char buffer2[64];
+    int n2 = sprintf(buffer2, "[runner] executing command %d...\n", getpid());
+    write(1, &buffer2, n2);
+
+    //criar array de args
+    char *argv[ARGS_LIM + 1];
+    for(int i = 0; i < c->num_args; i++){
+        argv[i] = c->args[i];
+    }
+    argv[c->num_args] = NULL;
+
+    //executar o comando
+    execvp(c->args[0], argv);
 }
 
 void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, int fd) {
@@ -45,9 +59,9 @@ void consultaComandos(int fd){
         InfoComando info;
         read(fd, &info, sizeof(info));
 
-        char cmd1[256];
-        sprintf("user-id %d - command-id %d\n", info.user_id, info.comando_id);
-        write(1, &cmd1, sizeof(cmd1));
+        char cmd1[64];
+        int n1 = sprintf(cmd1, "user-id %d - command-id %d\n", info.user_id, info.comando_id);
+        write(1, &cmd1, n1);
     }
 
     write(1, "---", 3);
@@ -58,9 +72,21 @@ void consultaComandos(int fd){
         InfoComando info;
         read(fd, &info, sizeof(info));
 
-        char cmd2[256];
-        sprintf("user-id %d - command-id %d\n", info.user_id, info.comando_id);
-        write(1, &cmd2, sizeof(cmd2));
+        char cmd2[64];
+        int n2 = sprintf(cmd2, "user-id %d - command-id %d\n", info.user_id, info.comando_id);
+        write(1, &cmd2, n2);
     }
 }
+
+void executerMain(Comando *c, int fd){
+    TipoComando tipo = c->tipo;
+    if (tipo == CMD_EXEC) executaComando(c);
+    else if (tipo == CMD_CONSULTA) consultaComandos(fd);
+    else if (tipo == CMD_OFF) {
+        char buffer[128];
+        int n = sprintf(buffer, "[runner] sent shutdown notification\n[runner] waiting for controller to shutdown...\n");
+        write(1, &buffer, n);
+    }
+}
+
 
