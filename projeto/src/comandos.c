@@ -1,6 +1,7 @@
 #include "comandos.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 const char* stringComando(TipoComando tipo){
     if (tipo == CMD_EXEC) return "Executar comando";
@@ -13,7 +14,7 @@ TipoComando verificaTipo(char *tipo) {
     if (strcmp(tipo, "-e") == 0) return CMD_EXEC;
     if (strcmp(tipo, "-c") == 0) return CMD_CONSULTA;
     if (strcmp(tipo, "-d") == 0) return CMD_OFF;
-    return CMD_UNKNOWN;
+    else return CMD_UNKNOWN;
 }
 
 Comando criaComando(int argc, char *argv[]) {
@@ -21,7 +22,7 @@ Comando criaComando(int argc, char *argv[]) {
     Comando cmd;
     cmd.num_args = 0;
     cmd.tipo = verificaTipo(argv[1]);
-    cmd.userId = atoi(argv[2]);
+    if (cmd.tipo == CMD_EXEC) cmd.userId = atoi(argv[2]);
 
     for (int i = 3; i < argc && cmd.num_args < ARGS_LIM; i++) {
         strcpy(cmd.args[cmd.num_args], argv[i]);

@@ -5,8 +5,8 @@
 
 typedef enum{
     FCFS = 1, // AINDA A DEFINIR
-    POLICY2 = 2, // AINDA A DEFINIR
-    POLICY3 = 3 // AINDA A DEFINIR
+    RR = 2, // AINDA A DEFINIR
+    LIFO = 3 // AINDA A DEFINIR
     // PODEM SER DEFINIDAS MAIS POLITICAS
 } SchedPolicies;
 
@@ -19,7 +19,12 @@ typedef struct {
 } Scheduler;
 
 void schedInit(Scheduler *s, Queue *q, const char* a1, const char* a2);
-void policyExists(int policy);
+int policyExists(SchedPolicies policy);
+
 Package firstComeFirstServe(Scheduler* s);
+Package roundRobin(Scheduler *s);
+Package lastInFirstOut(Scheduler *s);
+
+Package schedPolicy(Scheduler *s);
 
 #endif

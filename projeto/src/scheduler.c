@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "scheduler.h"
 #include "queue.h"
 
@@ -8,13 +10,17 @@ void schedInit(Scheduler *s, Queue *q, const char* a1, const char* a2){
     s->policy = atoi(a2);
     s->arrayPackages = malloc(s->comandosParalelo * sizeof(Package));
     s->filaEspera = q;
+    s->executions = 0;
 }
 
-void policyExists(int policy){
-    if (policy != FCFS || policy != POLICY2 || policy != POLICY3){
+int policyExists(SchedPolicies policy){
+    if (policy != FCFS && policy != RR && policy && LIFO){
         char buffer[256];
-        sprintf(buffer, "Política de escalonamento inexistente, por favor tente com 1, 2 ou 3\n");
+        int n = sprintf(buffer, "Política de escalonamento inexistente, por favor tente com 1, 2 ou 3\n");
+        write(1, &buffer, n);
+        return 0;
     }
+    return 1;
 }
 
 Package firstComeFirstServe(Scheduler* s){
@@ -22,12 +28,22 @@ Package firstComeFirstServe(Scheduler* s){
     for(int i=0; i < s->executions; i++){
         s->arrayPackages[i] = s->arrayPackages[i+1];
     }
-    if (s->filaEspera->size > 0){
-        s->arrayPackages[s->executions] = dequeue(s->filaEspera);
-    }
-    else s->executions--;
-
     return aux;
+}
+
+Package roundRobin(Scheduler *s){
+
+}
+
+Package lastInFirstOut(Scheduler *s){
+
+}
+
+Package schedPolicy(Scheduler *s){
+    //if (s->policy == FCFS) 
+    return firstComeFirstServe(s);
+    // else if (s->policy == LIFO) return lastInFirstOut(s);
+    // else return roundRobin(s);
 }
 
 

@@ -22,8 +22,8 @@ void executaComando(Comando *c){
 }
 
 void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, int fd) {
+    write(fd, &(fila->size), sizeof(int));
     write(fd, &executions, sizeof(int));
-    write(fd, &fila->size, sizeof(int));
 
     // do array — estão em execução
     for (int i = 0; i < executions; i++) {
@@ -47,13 +47,15 @@ void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, i
 }
 
 void consultaComandos(int fd){
-    int execucao, fila;
-    read(fd, &execucao, sizeof(int));
+    int execucao, fila, dummy;
+    read(fd, &dummy, sizeof(int)); // lixo que está no ficheiro e não descobri porquê
     read(fd, &fila, sizeof(int));
+    read(fd, &execucao, sizeof(int));
+
 
     write(1, "---", 3);
-    char executing[10] = "Executing";
-    executing[9] = '\0';
+    char executing[11] = "Executing\n";
+    executing[10] = '\0';
     write(1, &executing, sizeof(executing));
     for(int i=0; i < execucao; i++){
         InfoComando info;
@@ -65,8 +67,8 @@ void consultaComandos(int fd){
     }
 
     write(1, "---", 3);
-    char scheduled[10] = "Scheduled";
-    scheduled[9] = '\0';
+    char scheduled[11] = "Scheduled\n";
+    scheduled[10] = '\0';
     write(1, &scheduled, sizeof(scheduled));
     for(int i=0; i < fila; i++){
         InfoComando info;

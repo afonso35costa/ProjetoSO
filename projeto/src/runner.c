@@ -37,9 +37,7 @@ void runner_enviaPackage (const char* fifo_controllerToRunner, Package *p) {
     close(fd_controller);
 }
 
-void runner_recebeAutorizacao (const char* fifo_controllerToRunner){
-    // Abre o fifo do controller para ler Package
-    int fd_controller = open(fifo_controllerToRunner, O_RDONLY);
+void runner_recebeAutorizacao (const char* fifo_controllerToRunner, int fd_controller){
     if (fd_controller < 0){
         printf("Erro a abrir fifo do controller\n");
         unlink(fifo_controllerToRunner);
@@ -47,14 +45,11 @@ void runner_recebeAutorizacao (const char* fifo_controllerToRunner){
     }
 
     char a[4];
-    ssize_t n = read(fd_controller, &a, sizeof(a));
+    int n = read(fd_controller, &a, sizeof(a));
     if (n < 0){
         printf("[runner] Erro ao receber package do controller\n");
     }
     printf("Autorizacao: %s\n", a);
-
-    close(fd_controller);
-    unlink(fifo_controllerToRunner);
 }
 
 int main(int argc, char* argv[]){
@@ -94,10 +89,11 @@ int main(int argc, char* argv[]){
     snprintf(p.fifo_runner, sizeof(p.fifo_runner), "%s", fifo_controllerToRunner);
 
     runner_enviaPackage(fifo_controllerToRunner, &p);
-    runner_recebeAutorizacao(fifo_controllerToRunner);
+
+    int fd = open(fifo_controllerToRunner, O_RDONLY);
+    runner_recebeAutorizacao(fifo_controllerToRunner, fd);
 
     //Executar o comando
-    int fd = open(fifo_controllerToRunner, O_RDONLY);
     executerMain(&cmd, fd);
 
     if (p.comando.tipo == CMD_EXEC){
@@ -105,6 +101,16 @@ int main(int argc, char* argv[]){
         int n = sprintf(buffer, "[runner] command %d finished\n", getpid());
         write(1, buffer, n);
     }
+    else if (p.comando.tipo == CMD_OFF) {
+        // Runner que enviou -s fica à espera da confirmação
+        char buf[6];
+        int n = read(fd, &buf, 5);
+        if (n > 0) {
+            printf("[runner] controller exited.\n");
+        }
+        else perror("Erro a ler término");
+    }
+    close(fd);
 
     return 0;
 }

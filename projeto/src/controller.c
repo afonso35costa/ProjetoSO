@@ -11,8 +11,7 @@
 #include "queue.h"
 #include "executer.h"
 
-void controller_enviaAutorizacao(const char* fifo_controllerToRunner, char* autorizacao){
-    int fd_runner = open(fifo_controllerToRunner, O_WRONLY);
+void controller_enviaAutorizacao(const char* fifo_controllerToRunner, char* autorizacao, int fd_runner){
     if (fd_runner < 0){
         printf("[controller] erro ao abrir FIFO do runner para enviar autorizacao\n");
         return;
@@ -20,7 +19,6 @@ void controller_enviaAutorizacao(const char* fifo_controllerToRunner, char* auto
     if (write(fd_runner, autorizacao, sizeof(autorizacao)) == -1) {
         printf("[controller] erro ao dar autorização\n");
     }
-    close(fd_runner);
 }
 
 
@@ -32,6 +30,7 @@ int main(int argc, char* argv[]){
     Scheduler s;
     Queue q;
     schedInit(&s, &q, argv[1], argv[2]);
+    if (!policyExists(s.policy)) return 0;
     
     // FIFO do controller
     const char *fifo_runnerToController = "/tmp/runnerToController";
@@ -51,18 +50,23 @@ int main(int argc, char* argv[]){
     ssize_t nbytes;
     int terminar_pai = 0; 
     int status;
+    // Inicializar a estrutura onde se vão guardar e escalonar os comandos
+    Package pkg;
 
     while(!terminar_pai || s.filaEspera->size > 0 || s.executions > 0){
-        // Inicializar a estrutura onde se vão guardar e escalonar os comandos
-        Package pkg;
 
 		if ((nbytes = read(fd_controller, &pkg, sizeof(pkg))) > 0){
 
             //Adicionar package ao array ou à fila de espera
             if (s.executions < s.comandosParalelo) {
-                if (!terminar_pai) addPackageArray(s.arrayPackages, s.executions, &pkg);
+                if (!terminar_pai) {
+                    addPackageArray(s.arrayPackages, s.executions, &pkg);
+                    s.executions++;
+                }
+
                 //Executar o escalonamento
-                Package chosen = firstComeFirstServe(&s);
+                Package chosen = schedPolicy(&s);
+                if (chosen.comando.tipo == CMD_OFF) terminar_pai++;
 
                 //Criar processo filho para executar em paralelo
                 pid_t pidFilho = fork();
@@ -73,13 +77,15 @@ int main(int argc, char* argv[]){
 
                     char autorizacao[4] = "OLA";
                     autorizacao[3] = '\0';
-                    controller_enviaAutorizacao(fifo, autorizacao);
+                    int fd = open(fifo, O_WRONLY);
+                    controller_enviaAutorizacao(fifo, autorizacao, fd);
 
                     //Enviar a informação de consulta caso seja esse o comando
-                    int fd = open(fifo, O_WRONLY);
                     if (chosen.comando.tipo == CMD_CONSULTA) controller_enviaInfoComandos(s.arrayPackages, s.executions, s.filaEspera, fd);
-                    else if (chosen.comando.tipo == CMD_OFF) terminar_pai = 1;
-
+                    else if (chosen.comando.tipo == CMD_OFF) {
+                        write(fd, "ADEUS", 5);
+                    }
+                    close(fd);
                     _exit(0);
                 }
                 pid_t pid = waitpid(-1, &status, 0);
@@ -87,6 +93,10 @@ int main(int argc, char* argv[]){
                     perror("Erro a receber status");
                     return 1;
                 }
+                if (s.filaEspera->size > 0){
+                    s.arrayPackages[s.executions] = dequeue(s.filaEspera);
+                }
+                else s.executions--;
             }
             else if (!terminar_pai) enqueue(s.filaEspera, &pkg);
             else {
