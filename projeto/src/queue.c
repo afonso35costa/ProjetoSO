@@ -2,6 +2,12 @@
 #include "queue.h"
 #include "package.h"
 
+void queueInit (Queue *q){
+    q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
+}
+
 void enqueue(Queue *q, Package *pkg) {
     Node *novo = malloc(sizeof(Node));
     novo->pkg  = *pkg;

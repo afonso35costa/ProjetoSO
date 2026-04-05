@@ -13,6 +13,7 @@ typedef struct {
     int   size;
 } Queue;
 
+void queueInit (Queue *q);
 void enqueue(Queue *q, Package *pkg);
 void push_head(Queue *q, Package *pkg);
 Package dequeue(Queue *q);

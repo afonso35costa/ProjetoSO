@@ -29,6 +29,7 @@ int main(int argc, char* argv[]){
     }
     Scheduler s;
     Queue q;
+    queueInit(&q);
     schedInit(&s, &q, argv[1], argv[2]);
     if (!policyExists(s.policy)) return 0;
     
@@ -56,6 +57,7 @@ int main(int argc, char* argv[]){
     while(!terminar_pai || s.filaEspera->size > 0 || s.executions > 0){
 
 		if ((nbytes = read(fd_controller, &pkg, sizeof(pkg))) > 0){
+            printf("size fila: %d\n", s.filaEspera->size);
 
             if (pkg.comando.tipo == CMD_OFF) terminar_pai++;
 
@@ -63,15 +65,21 @@ int main(int argc, char* argv[]){
             char fifo[256];
             snprintf(fifo, sizeof(fifo), "%s", pkg.fifo_runner);
             int fd = open(fifo, O_WRONLY);
+            printf("Info do package\nTipo comando: %d, Status: %d, Args: %s\n", pkg.comando.tipo, pkg.status, pkg.comando.args[1]);
 
             //Adicionar package ao array ou à fila de espera
             if (s.executions < s.comandosParalelo && pkg.comando.tipo == CMD_EXEC) {
+
+
+                // LIGAR O TIMER
+
+
+                printf("Exec: %d\n", s.executions);
                 if (!terminar_pai) {
                     addPackageArray(s.arrayPackages, s.executions, &pkg);
                     s.executions++;
                 }
                 printf("Exec: %d\n", s.executions);
-
                 //Executar o escalonamento
                 Package chosen = schedPolicy(&s);
 
@@ -98,12 +106,16 @@ int main(int argc, char* argv[]){
                     char buf[4];
                     read(fd_controller, buf, 3);  // bloqueia até receber "FIM"
 
+                    printf("FIM\n");
+
                     _exit(0);
                 }
-                pid_t pid = waitpid(-1, &status, 0);
-                if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-                    perror("Erro a receber status");
-                    return 1;
+                pid_t pid = waitpid(-1, &status, WNOHANG);
+                if (pid > 0){
+                    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+                        perror("Erro a receber status");
+                        return 1;
+                    }
                 }
                 if (s.filaEspera->size > 0){
                     s.arrayPackages[s.executions] = dequeue(s.filaEspera);
@@ -111,8 +123,8 @@ int main(int argc, char* argv[]){
                 else s.executions--;
             }
             else if (!terminar_pai && pkg.comando.tipo == CMD_EXEC) {
-                enqueue(s.filaEspera, &pkg);
                 printf("Fila: %d\n", s.filaEspera->size);
+                enqueue(s.filaEspera, &pkg);
             }
             else if (pkg.comando.tipo != CMD_EXEC){
                 //Enviar a informação de consulta caso seja esse o comando

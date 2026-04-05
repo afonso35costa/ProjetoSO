@@ -1,8 +1,8 @@
 #ifndef COMANDOS
 #define COMANDOS
 
-#define ARGS_LIM 64
-#define ARGS_TAM 256
+#define ARGS_LIM 16
+#define ARGS_TAM 128
 
 typedef enum {
     CMD_UNKNOWN = -1,          /**< Comando inexistente. */

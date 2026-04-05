@@ -29,6 +29,7 @@ void runner_enviaPackage (const char* fifo_controllerToRunner, Package *p, int f
         int n1 = sprintf(buffer1, "[runner] command %d submitted\n", p->pid);
         write(1, &buffer1, n1);
     }
+    printf("sizeof(Package) = %zu\n", sizeof(Package));
 }
 
 void runner_recebeAutorizacao (const char* fifo_controllerToRunner, int fd_controller){
