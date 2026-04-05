@@ -9,12 +9,8 @@
 #include "comandos.h"
 #include "executer.h"
 
-void runner_enviaPackage (const char* fifo_controllerToRunner, Package *p) {
-    // FIFO para enviar a mensagem para o controller
-    const char *fifo_runnerToController = "/tmp/runnerToController";
-
-    // Abre o FIFO para escrita 
-    int fd_controller = open(fifo_runnerToController, O_WRONLY);
+void runner_enviaPackage (const char* fifo_controllerToRunner, Package *p, int fd_controller) {
+    
     if (fd_controller < 0) {
         perror("Erro ao abrir fifo_controller para escrita");
         unlink(fifo_controllerToRunner);
@@ -33,8 +29,6 @@ void runner_enviaPackage (const char* fifo_controllerToRunner, Package *p) {
         int n1 = sprintf(buffer1, "[runner] command %d submitted\n", p->pid);
         write(1, &buffer1, n1);
     }
-
-    close(fd_controller);
 }
 
 void runner_recebeAutorizacao (const char* fifo_controllerToRunner, int fd_controller){
@@ -88,13 +82,19 @@ int main(int argc, char* argv[]){
 
     snprintf(p.fifo_runner, sizeof(p.fifo_runner), "%s", fifo_controllerToRunner);
 
-    runner_enviaPackage(fifo_controllerToRunner, &p);
+    // FIFO para enviar a mensagem para o controller
+    const char *fifo_runnerToController = "/tmp/runnerToController";
+    int fd_controller = open(fifo_runnerToController, O_WRONLY);
+    runner_enviaPackage(fifo_controllerToRunner, &p, fd_controller);
 
     int fd = open(fifo_controllerToRunner, O_RDONLY);
-    runner_recebeAutorizacao(fifo_controllerToRunner, fd);
+    if (cmd.tipo == CMD_EXEC)runner_recebeAutorizacao(fifo_controllerToRunner, fd);
+    printf("GOLO\n");
 
     //Executar o comando
     executerMain(&cmd, fd);
+    write(fd_controller, "FIM", 3);
+    close(fd_controller);
 
     if (p.comando.tipo == CMD_EXEC){
         char buffer[256];

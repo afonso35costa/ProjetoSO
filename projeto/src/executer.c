@@ -47,10 +47,11 @@ void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, i
 }
 
 void consultaComandos(int fd){
-    int execucao, fila, dummy;
-    read(fd, &dummy, sizeof(int)); // lixo que está no ficheiro e não descobri porquê
+    int execucao, fila;
     read(fd, &fila, sizeof(int));
     read(fd, &execucao, sizeof(int));
+
+    printf("Exec: %d, Fila: %d\n", execucao, fila);
 
 
     write(1, "---", 3);
@@ -90,5 +91,7 @@ void executerMain(Comando *c, int fd){
         write(1, &buffer, n);
     }
 }
+
+
 
 
