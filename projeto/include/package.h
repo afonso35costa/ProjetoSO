@@ -34,5 +34,6 @@ void set_comando(Comando *c, Package *p);
 void set_status(int status, Package *p);
 
 void addPackageArray (Package* pkgs, int nr_cmds, Package *pkg);
+void removePackageArray(Package*pkgs, int executions, pid_t pid);
 
 #endif

@@ -30,21 +30,39 @@ void runner_enviaPackage (const char* fifo_controllerToRunner, Package *p, int f
         write(1, &buffer1, n1);
     }
     printf("sizeof(Package) = %zu\n", sizeof(Package));
+    close(fd_controller);
 }
 
-void runner_recebeAutorizacao (const char* fifo_controllerToRunner, int fd_controller){
+pid_t runner_recebePidFilho (const char* fifo_controllerToRunner, int fd_controller){
     if (fd_controller < 0){
         printf("Erro a abrir fifo do controller\n");
         unlink(fifo_controllerToRunner);
         exit(1);
     }
 
-    char a[4];
-    int n = read(fd_controller, &a, sizeof(a));
+    pid_t pid;
+    int n = read(fd_controller, &pid, sizeof(pid));
     if (n < 0){
         printf("[runner] Erro ao receber package do controller\n");
     }
-    printf("Autorizacao: %s\n", a);
+    printf("Pid filho: %d\n", pid);
+    return pid;
+}
+
+void runner_avisaFim (const char* fifo_controllerToRunner, int fd_filho){
+    if (fd_filho < 0) {
+        perror("Erro ao abrir fifo_controller para escrita");
+        unlink(fifo_controllerToRunner);
+        exit(1);
+    }
+
+    ssize_t size = write(fd_filho, "FIM", 3);
+    if (size != 3) {
+        printf("[runner] Erro ao enviar mensagem de término\n");
+        close(fd_filho);
+        unlink(fifo_controllerToRunner);
+        exit(1);
+    }
 }
 
 int main(int argc, char* argv[]){
@@ -74,7 +92,7 @@ int main(int argc, char* argv[]){
     // Cria o FIFO para resposta
     unlink(fifo_controllerToRunner); // Se já existir, apaga antes de criar
     if (mkfifo(fifo_controllerToRunner, 0666) < 0) {
-        perror("Erro ao criar FIFO do cliente");
+        perror("Erro ao criar FIFO do runner");
         exit(1);
     }
 
@@ -89,13 +107,25 @@ int main(int argc, char* argv[]){
     runner_enviaPackage(fifo_controllerToRunner, &p, fd_controller);
 
     int fd = open(fifo_controllerToRunner, O_RDONLY);
-    if (cmd.tipo == CMD_EXEC)runner_recebeAutorizacao(fifo_controllerToRunner, fd);
-    printf("GOLO\n");
+    if (cmd.tipo == CMD_EXEC){
+        pid_t pidFilho = runner_recebePidFilho(fifo_controllerToRunner, fd);
+        
+        printf("gay\n");
 
-    //Executar o comando
-    executerMain(&cmd, fd);
-    write(fd_controller, "FIM", 3);
-    close(fd_controller);
+        // FIFO para enviar a mensagem para o controller
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), "/tmp/runnerTofilho%d", pidFilho);
+        
+        printf("gay2\n");
+        int fd_filho = open(buffer, O_WRONLY);
+
+        printf("gay3\n");
+
+        //Executar o comando
+        executerMain(&cmd, fd);
+        runner_avisaFim(fifo_controllerToRunner, fd_filho);
+    }
+    else executerMain(&cmd, fd);
 
     if (p.comando.tipo == CMD_EXEC){
         char buffer[256];

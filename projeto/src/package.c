@@ -68,5 +68,14 @@ void addPackageArray (Package* pkgs, int nr_cmds, Package *pkg){
     pkgs[nr_cmds] = *pkg;
 }
 
+void removePackageArray(Package*pkgs, int executions, pid_t pid) {
+    for (int i = 0; i < executions; i++) {
+        if (pkgs[i].pid == pid) {
+            pkgs[i] = pkgs[executions - 1];
+            break;
+        }
+    }
+}
+
 
 
