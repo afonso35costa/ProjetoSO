@@ -4,6 +4,7 @@
 #include <fcntl.h>
 
 #define NAME_FIFO 256 // TAMANHO MAXIMO DO FIFO
+#define CMDFILE "infocomandos"
 
 typedef enum{
     WAITING = 0, // quando o comando ainda nao foi executado
@@ -14,26 +15,30 @@ typedef struct {
     Comando comando;
     char fifo_runner[NAME_FIFO];
     PackageStatus status;
-    int arrival_time;
-    pid_t pid;
+    double arrival_time;
+    pid_t runnerPid;
+    pid_t filhoPid;
 } Package;
 
 typedef struct{
     int comando_id;
     int user_id;
+    double arrival_time;
 } InfoComando;
 
 void package_init(Package *pkg, Comando *cmd);
 
 Comando* get_comando(Package *p);
 int get_status(Package *p);
-int get_time(Package *p);
-pid_t get_pid(Package *p);
+double get_time(Package *p);
+pid_t get_runnerPid(Package *p);
+pid_t get_filhoPid(Package *p);
 
 void set_comando(Comando *c, Package *p);
 void set_status(int status, Package *p);
 
 void addPackageArray (Package* pkgs, int nr_cmds, Package *pkg);
-void removePackageArray(Package*pkgs, int executions, pid_t pid);
+void removePackageporFilhoPid(Package*pkgs, int executions, pid_t pid);
+void escreveInfoComandosEmFicheiro (InfoComando info, const char* file);
 
 #endif

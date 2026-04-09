@@ -13,7 +13,7 @@ const char* stringComando(TipoComando tipo){
 TipoComando verificaTipo(char *tipo) {
     if (strcmp(tipo, "-e") == 0) return CMD_EXEC;
     if (strcmp(tipo, "-c") == 0) return CMD_CONSULTA;
-    if (strcmp(tipo, "-d") == 0) return CMD_OFF;
+    if (strcmp(tipo, "-s") == 0) return CMD_OFF;
     else return CMD_UNKNOWN;
 }
 

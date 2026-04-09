@@ -24,11 +24,7 @@ int policyExists(SchedPolicies policy){
 }
 
 Package firstComeFirstServe(Scheduler* s){
-    Package aux = s->arrayPackages[0];
-    for(int i=0; i < s->executions; i++){
-        s->arrayPackages[i] = s->arrayPackages[i+1];
-    }
-    return aux;
+    return dequeue(s->filaEspera);
 }
 
 Package roundRobin(Scheduler *s){

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "wait.h"
 #include "package.h"
 #include "comandos.h"
 #include "executer.h"
@@ -26,7 +27,7 @@ void runner_enviaPackage (const char* fifo_controllerToRunner, Package *p, int f
     }
     if (p->comando.tipo == CMD_EXEC){
         char buffer1[256];
-        int n1 = sprintf(buffer1, "[runner] command %d submitted\n", p->pid);
+        int n1 = sprintf(buffer1, "[runner] command %d submitted\n", p->runnerPid);
         write(1, &buffer1, n1);
     }
     printf("sizeof(Package) = %zu\n", sizeof(Package));
@@ -122,17 +123,31 @@ int main(int argc, char* argv[]){
         printf("gay3\n");
 
         //Executar o comando
-        executerMain(&cmd, fd);
+        pid_t pid = fork();
+        if (pid == 0) {
+            // filho executa o comando
+            executerMain(&cmd, fd);
+            perror("Erro no execvp");
+            _exit(1);
+        }
+        // pai espera que o filho termine
+        int status;
+        waitpid(pid, &status, 0);
+
+        // agora sim podes imprimir
+        if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+            char buffer2[256];
+            int n = sprintf(buffer2, "[runner] command %d finished\n", getpid());
+            write(1, buffer2, n);
+        }
+        else
+            perror("[runner] command failed\n");
+
         runner_avisaFim(fifo_controllerToRunner, fd_filho);
     }
     else executerMain(&cmd, fd);
 
-    if (p.comando.tipo == CMD_EXEC){
-        char buffer[256];
-        int n = sprintf(buffer, "[runner] command %d finished\n", getpid());
-        write(1, buffer, n);
-    }
-    else if (p.comando.tipo == CMD_OFF) {
+    if (p.comando.tipo == CMD_OFF) {
         // Runner que enviou -s fica à espera da confirmação
         char buf[6];
         int n = read(fd, &buf, 5);

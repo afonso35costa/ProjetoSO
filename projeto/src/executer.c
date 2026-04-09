@@ -28,7 +28,7 @@ void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, i
     // do array — estão em execução
     for (int i = 0; i < executions; i++) {
         InfoComando info = {
-            array[i].pid,
+            array[i].runnerPid,
             array[i].comando.userId,
         };
         write(fd, &info, sizeof(InfoComando));
@@ -38,7 +38,7 @@ void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, i
     Node *atual = fila->head;
     while (atual != NULL) {
         InfoComando info = {
-            atual->pkg.pid,
+            atual->pkg.runnerPid,
             atual->pkg.comando.userId,
         };
         write(fd, &info, sizeof(InfoComando));

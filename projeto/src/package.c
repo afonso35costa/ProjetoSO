@@ -20,7 +20,7 @@ void package_init(Package *pkg, Comando *cmd) {
     pkg->comando = *cmd;
     pkg->status = WAITING;
     pkg->arrival_time = time(NULL);
-    pkg->pid = getpid();
+    pkg->runnerPid = getpid();
     memset(pkg->fifo_runner, 0, NAME_FIFO);  // Inicializar o nome do FIFO
 }
 
@@ -38,13 +38,18 @@ int get_status(Package *p){
     return 0;
 }
 
-int get_time(Package *p){
+double get_time(Package *p){
     if (p) return p->arrival_time;
     return 0;
 }
 
-pid_t get_pid(Package *p){
-    if (p) return p->pid;
+pid_t get_runnerPid(Package *p){
+    if (p) return p->runnerPid;
+    return 0;
+}
+
+pid_t get_filhoPid(Package *p){
+    if (p) return p->filhoPid;
     return 0;
 }
 
@@ -68,13 +73,25 @@ void addPackageArray (Package* pkgs, int nr_cmds, Package *pkg){
     pkgs[nr_cmds] = *pkg;
 }
 
-void removePackageArray(Package*pkgs, int executions, pid_t pid) {
+void removePackageporFilhoPid(Package*pkgs, int executions, pid_t pid) {
     for (int i = 0; i < executions; i++) {
-        if (pkgs[i].pid == pid) {
+        if (pkgs[i].filhoPid == pid) {
             pkgs[i] = pkgs[executions - 1];
             break;
         }
     }
+}
+
+void escreveInfoComandosEmFicheiro (InfoComando info, const char* file) {
+    int fd = open(file, O_CREAT | O_WRONLY | O_APPEND, 0666);
+    if (fd < 0) {
+        perror("Erro a criar ficheiro");
+        exit(1);
+    }
+    if (fd > 0) {
+        write(fd, &info, sizeof(InfoComando));
+    }
+    close(fd);
 }
 
 

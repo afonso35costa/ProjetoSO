@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <wait.h>
 #include "package.h"
 #include "comandos.h"
@@ -13,7 +14,7 @@
 
 void controller_enviaPidFilho(const char* fifo_controllerToRunner, pid_t pid, int fd_runner){
     if (fd_runner < 0){
-        printf("[controller] erro ao abrir FIFO do runner para enviar autorizacao\n");
+        perror("[controller] erro ao abrir FIFO do runner para enviar autorizacao");
         return;
     }
     if (write(fd_runner, &pid, sizeof(pid)) == -1) {
@@ -23,6 +24,11 @@ void controller_enviaPidFilho(const char* fifo_controllerToRunner, pid_t pid, in
 
 
 int main(int argc, char* argv[]){
+
+    struct timespec start, end;
+    double exec_time;
+
+
     if (argc < 3) {
         printf("<ParallellComands> e <SchedPolicy> necessários\n");
         return 0;
@@ -53,21 +59,133 @@ int main(int argc, char* argv[]){
     int status;
     // Inicializar a estrutura onde se vão guardar e escalonar os comandos
     Package pkg;
+    pid_t pid;
 
     while(!terminar_pai || s.filaEspera->size > 0 || s.executions > 0){
 
-		if ((nbytes = read(fd_controller, &pkg, sizeof(pkg))) > 0){
-            printf("---\nsize fila: %d\n", s.filaEspera->size);
+        // RECOLHER FILHOS TERMINADOS 
+        while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
 
-            if (pkg.comando.tipo == CMD_OFF) terminar_pai++;
-            pid_t pid;
+            printf("Processo %d terminou\n", pid);
+
+            removePackageporFilhoPid(s.arrayPackages, s.executions, pid);
+            s.executions--;
+        }
+
+        // Colocar todos os packages lidos na fila de espera
+
+		if ((nbytes = read(fd_controller, &pkg, sizeof(pkg))) > 0){
+
+            clock_gettime(CLOCK_MONOTONIC, &start);
+
+            printf("---\nsize fila: %d\n", s.filaEspera->size);
 
             //Abrir um fifo com o pid do runner
             char fifo[256];
             snprintf(fifo, sizeof(fifo), "%s", pkg.fifo_runner);
+
+            // controller abre fifo para leitura do runner
             int fd = open(fifo, O_WRONLY);
+
+
             printf("Info do package\nTipo comando: %d, Status: %d, Args: %s\n", pkg.comando.tipo, pkg.status, pkg.comando.args[1]);
             printf("Exec: %d\n", s.executions);
+
+            if (pkg.comando.tipo == CMD_EXEC) {
+
+                enqueue(s.filaEspera, &pkg);
+            }
+
+            else if (pkg.comando.tipo == CMD_CONSULTA) {
+
+                pid_t pidFilho = fork();
+                if (pidFilho == 0) {
+                    controller_enviaInfoComandos(s.arrayPackages, s.executions, s.filaEspera, fd);
+                    close(fd);
+                    _exit(0);
+                }
+
+            }
+
+            else if (pkg.comando.tipo == CMD_OFF) {
+
+                terminar_pai = 1;
+
+                write(fd, "ADEUS", 5);
+
+            }
+        
+        }
+
+        // Realizar o escalonamento tendo em conta o limite de comandos em paralelo
+
+        while (s.executions < s.comandosParalelo && s.filaEspera->size > 0) {
+
+            Package chosen = schedPolicy(&s);
+
+            pid_t pidFilho = fork();
+
+            if (pidFilho == 0) {
+
+                pid_t pid = getpid();
+
+            // Filho do controller cria FIFO para o runner avisar que terminou
+                char buffer[256];
+                sprintf(buffer, "/tmp/runnerTofilho%d", pid);
+
+                unlink(buffer); // Se já existir, apaga antes de criar
+                if (mkfifo(buffer, 0666) < 0) {
+                    perror("Erro ao criar FIFO do runner para o filho");
+                    exit(1);
+                }
+
+                // Processo filho envia o seu pid para o runner saber para onde manda a resposta
+
+                printf("Fifo nome: %s\n", chosen.fifo_runner);
+
+                int fd = open(chosen.fifo_runner, O_WRONLY);
+
+                controller_enviaPidFilho(chosen.fifo_runner, pid, fd);
+
+                printf("ola\n");
+
+                close(fd);
+
+                // Processo filho abre fifo para ler a resposta do runner
+
+                int fd_filho = open(buffer, O_RDONLY);
+
+                printf("bbbb\n");
+                
+                pid_t resposta;
+                if (read(fd_filho, &resposta, sizeof(pid_t)) > 0) {
+                    printf("aaaa\n");
+                    clock_gettime(CLOCK_MONOTONIC, &end);
+                    exec_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+                    InfoComando info = {
+                        chosen.runnerPid,
+                        chosen.comando.userId,
+                        exec_time,
+                    };
+                    escreveInfoComandosEmFicheiro (info, CMDFILE);
+                }
+
+                _exit(0);
+            }
+
+            else {
+
+                chosen.filhoPid = pidFilho;
+
+                addPackageArray(s.arrayPackages, s.executions, &chosen);
+
+                s.executions++;
+            }
+        }
+    }
+
+/*
+            // TUDO O QUE ESTÁ PARA BAIXO É A VERSAO ANTIGA
 
             //Adicionar package ao array ou à fila de espera
             if (s.executions < s.comandosParalelo && pkg.comando.tipo == CMD_EXEC) {
@@ -196,6 +314,8 @@ int main(int argc, char* argv[]){
             }
 	    }
     }
+
+*/ 
     close(fd_controller);
     unlink(fifo_runnerToController);
 
