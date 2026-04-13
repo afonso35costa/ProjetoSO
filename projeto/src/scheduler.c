@@ -14,7 +14,7 @@ void schedInit(Scheduler *s, Queue *q, const char* a1, const char* a2){
 }
 
 int policyExists(SchedPolicies policy){
-    if (policy != FCFS && policy != RR && policy && LIFO){
+    if (policy != FCFS && policy != RR && policy != LIFO){
         char buffer[256];
         int n = sprintf(buffer, "Política de escalonamento inexistente, por favor tente com 1, 2 ou 3\n");
         write(1, &buffer, n);
