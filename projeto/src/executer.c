@@ -4,6 +4,7 @@
 #include "package.h"
 #include "queue.h"
 #include "scheduler.h"
+#include <glib.h>
 
 void executaComando(Comando *c){
     char buffer2[64];
@@ -21,7 +22,7 @@ void executaComando(Comando *c){
     execvp(c->args[0], argv);
 }
 
-void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, int fd) {
+void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, GHashTable *hash, int policy, int fd) {
     write(fd, &(fila->size), sizeof(int));
     write(fd, &executions, sizeof(int));
 
@@ -34,16 +35,40 @@ void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, i
         write(fd, &info, sizeof(InfoComando));
     }
 
-    // da fila — estão em espera
-    Node *atual = fila->head;
-    while (atual != NULL) {
-        InfoComando info = {
-            atual->pkg.runnerPid,
-            atual->pkg.comando.userId,
-        };
-        write(fd, &info, sizeof(InfoComando));
-        atual = atual->next;
+    if (policy == FCFS) {
+            // da fila — estão em espera
+        Node *atual = fila->head;
+        while (atual != NULL) {
+            InfoComando info = {
+                atual->pkg.runnerPid,
+                atual->pkg.comando.userId,
+            };
+            write(fd, &info, sizeof(InfoComando));
+            atual = atual->next;
+        }
     }
+    else if (policy == RR) {
+        GHashTableIter iter;
+        gpointer key, value;
+
+        g_hash_table_iter_init(&iter, hash);
+
+        while (g_hash_table_iter_next(&iter, &key, &value)) {
+            Queue *fila = value;
+
+            Node *atual = fila->head;
+            while (atual != NULL) {
+                InfoComando info = {
+                    atual->pkg.runnerPid,
+                    atual->pkg.comando.userId,
+                };
+
+                write(fd, &info, sizeof(InfoComando));
+                atual = atual->next;
+            }
+        }
+    }
+
 }
 
 void consultaComandos(int fd){

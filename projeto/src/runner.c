@@ -13,7 +13,7 @@
 void runner_enviaPackage (const char* fifo_controller_para_runner, Package *pacote, int fd_para_controller) {
     
     if (fd_para_controller < 0) {
-        perror("Erro ao abrir fifo do controller para escrita");
+        printf("[runner] Controller encerrado ou prestes a encerrar\n");
         unlink(fifo_controller_para_runner);
         exit(1);
     }
@@ -46,6 +46,7 @@ pid_t runner_recebePidFilho (const char* fifo_controller_para_runner, int fd_res
     if (n < 0){
         printf("[runner] Erro ao receber pid do controller\n");
     }
+    if (n == 0) printf("O controller está a encerrar, comando não executável\n");
     printf("Pid filho: %d\n", pid_filho);
     return pid_filho;
 }
