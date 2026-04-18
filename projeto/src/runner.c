@@ -87,6 +87,11 @@ int main(int argc, char* argv[]){
         exit(1);
     }
 
+    if (comando.tipo == CMD_EXEC && argc < 4) {
+        fprintf(stderr, "Uso: ./runner -e <user-id> \"<command> <args>\"\n");
+        exit(1);
+    }
+
     // Criação de um FIFO único para cada runner
     char fifo_controller_para_runner[256];
     snprintf(fifo_controller_para_runner, sizeof(fifo_controller_para_runner), "/tmp/controllerToRunner_%d", getpid());

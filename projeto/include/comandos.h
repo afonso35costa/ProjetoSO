@@ -22,7 +22,6 @@ typedef struct Comando {
     int userId;
 } Comando;
 
-const char* stringComando(TipoComando tipo);
 TipoComando verificaTipo(char *tipo);
 Comando criaComando(int argc, char *argv[]);
 

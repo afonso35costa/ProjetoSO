@@ -3,13 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-const char* stringComando(TipoComando tipo){
-    if (tipo == CMD_EXEC) return "Executar comando";
-    else if (tipo == CMD_CONSULTA) return "Consultar comandos em execução";
-    else if (tipo == CMD_OFF) return "Terminar o programa controller";
-    else return "Comando desconhecido";
-}
-
 TipoComando verificaTipo(char *tipo) {
     if (strcmp(tipo, "-e") == 0) return CMD_EXEC;
     if (strcmp(tipo, "-c") == 0) return CMD_CONSULTA;
@@ -18,16 +11,25 @@ TipoComando verificaTipo(char *tipo) {
 }
 
 Comando criaComando(int argc, char *argv[]) {
-
     Comando cmd;
     cmd.num_args = 0;
     cmd.tipo = verificaTipo(argv[1]);
-    if (cmd.tipo == CMD_EXEC) cmd.userId = atoi(argv[2]);
 
-    for (int i = 3; i < argc && cmd.num_args < ARGS_LIM; i++) {
-        strcpy(cmd.args[cmd.num_args], argv[i]);
-        cmd.args[cmd.num_args][ARGS_LIM - 1] = '\0';
-        cmd.num_args++;
+    if (cmd.tipo == CMD_EXEC) {
+        cmd.userId = atoi(argv[2]);
+
+        char cmd_str[ARGS_TAM];
+        strncpy(cmd_str, argv[3], ARGS_TAM - 1);
+        cmd_str[ARGS_TAM - 1] = '\0';
+
+        // split da string por espaços
+        char *token = strtok(cmd_str, " ");
+        while (token != NULL && cmd.num_args < ARGS_LIM) {
+            strncpy(cmd.args[cmd.num_args], token, ARGS_TAM - 1);
+            cmd.args[cmd.num_args][ARGS_TAM - 1] = '\0';
+            cmd.num_args++;
+            token = strtok(NULL, " ");
+        }
     }
 
     return cmd;
