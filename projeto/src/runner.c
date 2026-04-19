@@ -27,7 +27,7 @@ void runner_enviaPackage (const char* fifo_controller_para_runner, Package *paco
     }
     if (pacote->comando.tipo == CMD_EXEC){
         char buffer_msg[256];
-        int tam_msg = sprintf(buffer_msg, "[runner] comando %d submetido\n", pacote->runnerPid);
+        int tam_msg = sprintf(buffer_msg, "[runner] command %d submitted\n", pacote->runnerPid);
         write(1, buffer_msg, tam_msg);
     }
     printf("sizeof(Package) = %zu\n", sizeof(Package));
@@ -80,8 +80,14 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "O executável runner precisa de mais argumentos para ser usado\n");
         exit(1);
     }
+    int temOp = 0;
+    Comando comando = criaComando(argc, argv, &temOp);
 
-    Comando comando = criaComando(argc, argv);
+    if (temOp) {
+        ComandoParsed parsed = parseComando(&comando);
+        // ACABAR DE DEFINIR, SE PRECISAR DE MAIS COISAS PARA O PARSED, DEFINIR NA STRUCT E NO PARSECOMANDO
+    }
+
     if (comando.tipo == CMD_UNKNOWN) {
         printf("Comando desconhecido\n");
         exit(1);
@@ -140,7 +146,7 @@ int main(int argc, char* argv[]){
         // agora sim podes imprimir
         if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
             char mensagem_fim[256];
-            int tam_mensagem_fim = sprintf(mensagem_fim, "[runner] comando %d terminado\n", getpid());
+            int tam_mensagem_fim = sprintf(mensagem_fim, "[runner] command %d finished\n", getpid());
             write(1, mensagem_fim, tam_mensagem_fim);
         }
         else

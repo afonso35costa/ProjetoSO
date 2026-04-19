@@ -6,9 +6,10 @@
 #include "scheduler.h"
 #include <glib.h>
 
-void executaComando(Comando *c){
+void executaComando(Package *p){
+    Comando *c = &p->comando;
     char buffer2[64];
-    int n2 = sprintf(buffer2, "[runner] executing command %d...\n", getpid());
+    int n2 = sprintf(buffer2, "[runner] executing command %d...\n", p->runnerPid);
     write(1, &buffer2, n2);
 
     //criar array de args
@@ -106,9 +107,10 @@ void consultaComandos(int fd){
     }
 }
 
-void executerMain(Comando *c, int fd){
+void executerMain(Package *p, int fd){
+    Comando *c = &p->comando;
     TipoComando tipo = c->tipo;
-    if (tipo == CMD_EXEC) executaComando(c);
+    if (tipo == CMD_EXEC) executaComando(p);
     else if (tipo == CMD_CONSULTA) consultaComandos(fd);
     else if (tipo == CMD_OFF) {
         char buffer[128];

@@ -22,12 +22,26 @@ typedef struct Comando {
     int userId;
 } Comando;
 
+typedef struct {
+    char args[ARGS_LIM][ARGS_TAM];  // argumentos do comando
+    int  num_args;
+    char stdin_file[ARGS_TAM];      // ficheiro para 
+    char stdout_file[ARGS_TAM];     // ficheiro para >
+    char stderr_file[ARGS_TAM];     // ficheiro para 2>
+} Segmento;
+
+typedef struct {
+    Segmento segmentos[ARGS_LIM];   // cada segmento é um comando do pipe
+    int num_segmentos;
+} ComandoParsed;
+
 TipoComando verificaTipo(char *tipo);
-Comando criaComando(int argc, char *argv[]);
+Comando criaComando(int argc, char *argv[], int *temOperadores);
 
 TipoComando get_tipo(Comando *c);
 int get_numArgs(Comando *c);
 char* get_arg_porIndice(Comando *c, int index);
 int get_userId(Comando *c);
+ComandoParsed parseComando(Comando *cmd);
 
 #endif
