@@ -7,5 +7,6 @@ GHashTable* hash_create();
 void add_to_hashRR(GHashTable *hashRR, int key, Queue *value);
 Queue* get_from_hashRR(GHashTable *hashRR, int key);
 void remove_from_hashRR(GHashTable *hashRR, int key);
+int cmd_count_in_all_queues(GHashTable *hashRR);
 
 #endif

@@ -4,27 +4,39 @@
 #include "package.h"
 #include "queue.h"
 #include "scheduler.h"
+#include "hashRR.h"
 #include <glib.h>
 
-void executaComando(Package *p){
+void executaComando(Package *p, int temOp){
     Comando *c = &p->comando;
     char buffer2[64];
     int n2 = sprintf(buffer2, "[runner] executing command %d...\n", p->runnerPid);
     write(1, &buffer2, n2);
 
-    //criar array de args
-    char *argv[ARGS_LIM + 1];
-    for(int i = 0; i < c->num_args; i++){
-        argv[i] = c->args[i];
-    }
-    argv[c->num_args] = NULL;
+    if (!temOp) {
+        //criar array de args
+        char *argv[ARGS_LIM + 1];
+        for(int i = 0; i < c->num_args; i++){
+            argv[i] = c->args[i];
+        }
+        argv[c->num_args] = NULL;
 
-    //executar o comando
-    execvp(c->args[0], argv);
+        //executar o comando
+        execvp(c->args[0], argv);
+    }
+    else {
+        
+    }
 }
 
-void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, GHashTable *hash, int policy, int fd) {
-    write(fd, &(fila->size), sizeof(int));
+void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, GHashTable *hash, int policy, int fd, IdQueue *idQueue) {
+    if (policy == FCFS) {
+        write(fd, &(fila->size), sizeof(int));
+    }
+    else if (policy == RR) {
+        int total_fila = cmd_count_in_all_queues(hash);
+        write(fd, &total_fila, sizeof(int));
+    }
     write(fd, &executions, sizeof(int));
 
     // do array — estão em execução
@@ -49,27 +61,36 @@ void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, G
         }
     }
     else if (policy == RR) {
-        GHashTableIter iter;
-        gpointer key, value;
+        int total = cmd_count_in_all_queues(hash);
+        int pids[total];
+        int userIds[total];
 
-        g_hash_table_iter_init(&iter, hash);
-
-        while (g_hash_table_iter_next(&iter, &key, &value)) {
-            Queue *fila = value;
-
-            Node *atual = fila->head;
-            while (atual != NULL) {
-                InfoComando info = {
-                    atual->pkg.runnerPid,
-                    atual->pkg.comando.userId,
-                };
-
-                write(fd, &info, sizeof(InfoComando));
-                atual = atual->next;
+        int i = 0;
+        printf("Size idqueue = %d\n", idQueue->size);
+        UserNode *tmp = idQueue->head;
+        while (tmp != NULL) {
+            Queue *fila = get_from_hashRR(hash, tmp->user_id);
+            if (fila != NULL) {
+                Node *cur = fila->head;
+                printf("User id %d\n", tmp->user_id);
+                int idx = i;
+                while (cur != NULL) {
+                    pids[idx]    = cur->pkg.runnerPid;
+                    userIds[idx] = cur->pkg.comando.userId;
+                    idx += idQueue->size;
+                    cur = cur->next;
+                }
+                i++;
             }
+            tmp = tmp->next;
+        }
+
+        for (int j = 0; j < total; j++) {
+            InfoComando info = { pids[j], userIds[j] };
+            printf("Enviando info comando: runnerPid=%d, userId=%d\n", info.comando_id, info.user_id);
+            write(fd, &info, sizeof(InfoComando));
         }
     }
-
 }
 
 void consultaComandos(int fd){
@@ -107,10 +128,10 @@ void consultaComandos(int fd){
     }
 }
 
-void executerMain(Package *p, int fd){
+void executerMain(Package *p, int fd, int temOp){
     Comando *c = &p->comando;
     TipoComando tipo = c->tipo;
-    if (tipo == CMD_EXEC) executaComando(p);
+    if (tipo == CMD_EXEC) executaComando(p, temOp);
     else if (tipo == CMD_CONSULTA) consultaComandos(fd);
     else if (tipo == CMD_OFF) {
         char buffer[128];

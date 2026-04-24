@@ -30,8 +30,6 @@ void runner_enviaPackage (const char* fifo_controller_para_runner, Package *paco
         int tam_msg = sprintf(buffer_msg, "[runner] command %d submitted\n", pacote->runnerPid);
         write(1, buffer_msg, tam_msg);
     }
-    printf("sizeof(Package) = %zu\n", sizeof(Package));
-    close(fd_para_controller);
 }
 
 pid_t runner_recebePidFilho (const char* fifo_controller_para_runner, int fd_resposta_controller){
@@ -51,15 +49,23 @@ pid_t runner_recebePidFilho (const char* fifo_controller_para_runner, int fd_res
     return pid_filho;
 }
 
-void runner_avisaFim (const char* fifo_controller_para_runner, int fd_para_filho){
+void runner_avisaFim (const char* fifo_controller_para_runner, int fd_para_filho, int userId){
     if (fd_para_filho < 0) {
         perror("Erro ao abrir fifo do filho para escrita");
         unlink(fifo_controller_para_runner);
         exit(1);
     }
 
-    ssize_t size = write(fd_para_filho, "FIM", 3);
-    if (size != 3) {
+    Comando cmd_fim;
+    cmd_fim.tipo = CMD_FIM;
+    cmd_fim.num_args = 0;
+    cmd_fim.userId = userId;
+    cmd_fim.args[0][0] = '\0';
+    Package pacote_fim;
+    package_init(&pacote_fim, &cmd_fim);
+
+    ssize_t size = write(fd_para_filho, &pacote_fim, sizeof(pacote_fim));
+    if (size != sizeof(Package)) {
         printf("[runner] Erro ao enviar mensagem de término\n");
         close(fd_para_filho);
         unlink(fifo_controller_para_runner);
@@ -80,21 +86,17 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "O executável runner precisa de mais argumentos para ser usado\n");
         exit(1);
     }
+
     int temOp = 0;
     Comando comando = criaComando(argc, argv, &temOp);
-
+    /*
     if (temOp) {
         ComandoParsed parsed = parseComando(&comando);
-        // ACABAR DE DEFINIR, SE PRECISAR DE MAIS COISAS PARA O PARSED, DEFINIR NA STRUCT E NO PARSECOMANDO
     }
+        */
 
     if (comando.tipo == CMD_UNKNOWN) {
         printf("Comando desconhecido\n");
-        exit(1);
-    }
-
-    if (comando.tipo == CMD_EXEC && argc < 4) {
-        fprintf(stderr, "Uso: ./runner -e <user-id> \"<command> <args>\"\n");
         exit(1);
     }
 
@@ -125,17 +127,19 @@ int main(int argc, char* argv[]){
     if (comando.tipo == CMD_EXEC){
         pid_t pid_filho = runner_recebePidFilho(fifo_controller_para_runner, fd_resposta_controller);
         
-        // FIFO para enviar a mensagem para o filho
+        /* FIFO para enviar a mensagem para o filho
         char fifo_runner_para_filho[256];
         snprintf(fifo_runner_para_filho, sizeof(fifo_runner_para_filho), "/tmp/runnerTofilho%d", pid_filho);
         
         int fd_para_filho = open(fifo_runner_para_filho, O_WRONLY);
 
+        */
+
         //Executar o comando
         pid_t pid = fork();
         if (pid == 0) {
             // filho executa o comando
-            executerMain(&comando, fd_resposta_controller);
+            executerMain(&pacote, fd_resposta_controller, temOp);
             perror("Erro no execvp");
             _exit(1);
         }
@@ -149,12 +153,14 @@ int main(int argc, char* argv[]){
             int tam_mensagem_fim = sprintf(mensagem_fim, "[runner] command %d finished\n", getpid());
             write(1, mensagem_fim, tam_mensagem_fim);
         }
-        else
-            perror("[runner] command failed\n");
+        else perror("[runner] command failed\n");
 
-        runner_avisaFim(fifo_controller_para_runner, fd_para_filho);
+        
+
+        runner_avisaFim(fifo_controller_para_runner, fd_para_controller, comando.userId);
+        close(fd_para_controller);
     }
-    else executerMain(&comando, fd_resposta_controller);
+    else executerMain(&pacote, fd_resposta_controller, temOp);
 
     if (pacote.comando.tipo == CMD_OFF) {
         // Runner que enviou -s fica à espera da confirmação

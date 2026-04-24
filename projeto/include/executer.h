@@ -6,9 +6,9 @@
 #include "scheduler.h"
 #include "hashRR.h"
 
-void executaComando(Comando *c);
-void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, GHashTable *hash, int policy, int fd);
+void executaComando(Package *p, int temOp);
+void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, GHashTable *hash, int policy, int fd, IdQueue *idQueue);
 void consultaComandos(int fd);
-void executerMain(Comando *c, int fd);
+void executerMain(Package *p, int fd, int temOp);
 
 #endif

@@ -9,6 +9,7 @@ typedef enum {
     CMD_EXEC = 1,               /**< Comando para executar (-e). */
     CMD_CONSULTA = 2,           /**< Comando para consultar comandos em execução (-c). */
     CMD_OFF = 3,            /**< Comando de terminação do controller (-d). */
+    CMD_FIM = 4             /**< Comando de fim de execução do runner (-f). */
 } TipoComando;
 
 /**

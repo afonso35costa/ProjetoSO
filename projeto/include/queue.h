@@ -32,5 +32,6 @@ Package dequeue(Queue *q);
 void idQueueInit (IdQueue *q);
 void userEnqueue(IdQueue *q, int user_id);
 int userDequeue(IdQueue *q);
+int userInQueue(IdQueue *q, int userId);
 
 #endif

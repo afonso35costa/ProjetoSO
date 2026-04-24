@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "queue.h"
 #include "package.h"
 
@@ -33,6 +34,7 @@ void push_head(Queue *q, Package *pkg) {
 }
 
 Package dequeue(Queue *q) {
+    printf("Dequeue: fila tem %d elementos\n", q->size);
     Node   *tmp = q->head;
     Package pkg = tmp->pkg;
     q->head = q->head->next;
@@ -74,3 +76,11 @@ int userDequeue(IdQueue *q) {
     return id;
 }
 
+int userInQueue(IdQueue *q, int userId) {
+    UserNode *tmp = q->head;
+    while (tmp != NULL) {
+        if (tmp->user_id == userId) return 1;
+        tmp = tmp->next;
+    }
+    return 0;
+}

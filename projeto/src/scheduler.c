@@ -30,11 +30,15 @@ Package firstComeFirstServe(Scheduler* s){
 }
 
 Package roundRobin(Scheduler *s, IdQueue *idQueue){
+    printf("Round Robin: idQueue tem %d elementos\n", idQueue->size);
     int userEscolhido = userDequeue(idQueue);
+    printf("User escolhido: %d\n", userEscolhido);
     Queue *q = get_from_hashRR(s->hashRR, userEscolhido);
+    if (q->head == NULL) {
+        printf("Fila do user %d vazia ou inexistente\n", userEscolhido);
+    }
     Package p = dequeue(q);
-    if (q != NULL && q->head != NULL) userEnqueue(idQueue, userEscolhido);
-    else remove_from_hashRR(s->hashRR, userEscolhido);
+
     return p;  
 }
 

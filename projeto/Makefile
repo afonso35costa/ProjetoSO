@@ -14,7 +14,7 @@ folders:
 bin/controller: obj/controller.o obj/scheduler.o obj/comandos.o obj/queue.o obj/package.o obj/executer.o obj/hashRR.o
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-bin/runner: obj/runner.o obj/comandos.o obj/package.o obj/executer.o
+bin/runner: obj/runner.o obj/comandos.o obj/package.o obj/executer.o obj/hashRR.o obj/queue.o
 	$(CC) $^ -o $@ $(LDFLAGS)
 
 obj/%.o: src/%.c
