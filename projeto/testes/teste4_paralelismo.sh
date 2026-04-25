@@ -11,9 +11,9 @@ CONTROLLER_PID=$!
 sleep 1
 
 time (
-    ../bin/runner -e 1 sleep 4 &
-    ../bin/runner -e 2 sleep 4 &
-    ../bin/runner -e 3 sleep 4 &
+    ../bin/runner -e 1 "sleep 4" &
+    ../bin/runner -e 2 "sleep 4" &
+    ../bin/runner -e 3 "sleep 4" &
     wait
 )
 
@@ -29,9 +29,9 @@ CONTROLLER_PID=$!
 sleep 1
 
 time (
-    ../bin/runner -e 1 sleep 4 &
-    ../bin/runner -e 2 sleep 4 &
-    ../bin/runner -e 3 sleep 4 &
+    ../bin/runner -e 1 "sleep 4" &
+    ../bin/runner -e 2 "sleep 4" &
+    ../bin/runner -e 3 "sleep 4" &
     wait
 )
 

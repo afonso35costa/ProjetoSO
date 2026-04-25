@@ -9,7 +9,7 @@ CONTROLLER_PID=$!
 
 sleep 1
 
-../bin/runner -e 1 echo ola
+../bin/runner -e 1 "echo ola"
 
 sleep 1
 

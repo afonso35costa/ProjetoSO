@@ -1,8 +1,9 @@
 #ifndef COMANDOS
 #define COMANDOS
 
-#define ARGS_LIM 16
+#define ARGS_LIM 256
 #define ARGS_TAM 128
+#define SEG_LIM 64
 
 typedef enum {
     CMD_UNKNOWN = -1,          /**< Comando inexistente. */
@@ -32,7 +33,7 @@ typedef struct {
 } Segmento;
 
 typedef struct {
-    Segmento segmentos[ARGS_LIM];   // cada segmento é um comando do pipe
+    Segmento segmentos[64];   // cada segmento é um comando do pipe
     int num_segmentos;
 } ComandoParsed;
 

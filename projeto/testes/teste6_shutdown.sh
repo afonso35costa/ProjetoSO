@@ -9,7 +9,7 @@ CONTROLLER_PID=$!
 
 sleep 1
 
-../bin/runner -e 1 sleep 5 &
+../bin/runner -e 1 "sleep 5" &
 
 sleep 1
 

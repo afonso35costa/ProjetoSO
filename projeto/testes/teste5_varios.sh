@@ -9,15 +9,15 @@ CONTROLLER_PID=$!
 
 sleep 1
 
-../bin/runner -e 1 echo user1 &
+../bin/runner -e 1 "echo user1" &
 R1=$!
-../bin/runner -e 2 sleep 2 &
+../bin/runner -e 2 "sleep 2" &
 R2=$!
-../bin/runner -e 3 echo user3 &
+../bin/runner -e 3 "echo user3" &
 R3=$!
-../bin/runner -e 4 sleep 1 &
+../bin/runner -e 4 "sleep 1" &
 R4=$!
-../bin/runner -e 5 echo user5 &
+../bin/runner -e 5 "echo user5" &
 R5=$!
 
 wait $R1 $R2 $R3 $R4 $R5

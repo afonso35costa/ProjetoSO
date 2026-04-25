@@ -94,6 +94,7 @@ int main(int argc, char* argv[]){
 
             if (pacote.comando.tipo == CMD_EXEC) {
                 if (escalonador.policy == FCFS) enqueue(escalonador.filaEspera, &pacote);
+                else if (escalonador.policy == LIFO) push_head(escalonador.filaEspera, &pacote);
                 else {
                     Queue *userCmdQueue = get_from_hashRR(escalonador.hashRR, pacote.comando.userId);
                     if (userCmdQueue) {
@@ -144,6 +145,16 @@ int main(int argc, char* argv[]){
             }
 
             else if (pacote.comando.tipo == CMD_FIM) {
+                // Escrever em ficheiro e contar tempo de execução
+                clock_gettime(CLOCK_MONOTONIC, &fim);
+                tempo_execucao = (fim.tv_sec - inicio.tv_sec) + (fim.tv_nsec - inicio.tv_nsec) / 1e9;
+                InfoComando info = {
+                    pacote.runnerPid,
+                    pacote.comando.userId,
+                    tempo_execucao,
+                };
+                escreveInfoComandosEmFicheiro (info, CMDFILE);
+
                 if (escalonador.policy == FCFS) removePackageporFilhoPid(escalonador.arrayPackages, escalonador.executions, pacote.runnerPid);
                 else if (escalonador.policy == RR) {
                     Queue *q = get_from_hashRR(escalonador.hashRR, pacote.comando.userId);
@@ -173,7 +184,7 @@ int main(int argc, char* argv[]){
             printf("costa\n");
 
             Package pacote_selecionado = schedPolicy(&escalonador, &idQueue);
-            nr_comandos_hash--;
+            if (escalonador.policy == RR) nr_comandos_hash--;
             printf("2 debug hash: %d\n", nr_comandos_hash);
 
             pid_t pid_filho = fork();

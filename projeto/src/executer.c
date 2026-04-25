@@ -5,27 +5,176 @@
 #include "queue.h"
 #include "scheduler.h"
 #include "hashRR.h"
+#include <wait.h>
 #include <glib.h>
 
-void executaComando(Package *p, int temOp){
-    Comando *c = &p->comando;
-    char buffer2[64];
-    int n2 = sprintf(buffer2, "[runner] executing command %d...\n", p->runnerPid);
-    write(1, &buffer2, n2);
+void executaComando(Package *p, int temOp) {
 
+    Comando *c = &p->comando;
+
+    char buffer2[64];
+    int n2 = sprintf(buffer2,
+                     "[runner] executing command %d...\n",
+                     p->runnerPid);
+    write(1, buffer2, n2);
+
+    // =========================
+    // CASO SIMPLES (sem pipes)
+    // =========================
     if (!temOp) {
-        //criar array de args
+
         char *argv[ARGS_LIM + 1];
-        for(int i = 0; i < c->num_args; i++){
+
+        for (int i = 0; i < c->num_args; i++)
             argv[i] = c->args[i];
-        }
+
         argv[c->num_args] = NULL;
 
-        //executar o comando
-        execvp(c->args[0], argv);
+        execvp(argv[0], argv);
+        perror("execvp");
+        exit(1);
     }
-    else {
-        
+
+    // =========================
+    // PIPELINE
+    // =========================
+    ComandoParsed parsed = parseComando(c);
+
+    int prev_read = -1;
+
+    for (int i = 0; i < parsed.num_segmentos; i++) {
+
+        int pipefd[2] = {-1, -1};
+        Segmento *seg = &parsed.segmentos[i];
+
+        if (i < parsed.num_segmentos - 1) {
+            if (pipe(pipefd) < 0) {
+                perror("pipe");
+                exit(1);
+            }
+        }
+
+        pid_t pid = fork();
+
+        if (pid == 0) {
+
+            // ======================
+            // INPUT (< ou pipe)
+            // ======================
+            if (seg->stdin_file[0] != '\0') {
+
+                int fd = open(seg->stdin_file, O_RDONLY);
+                if (fd < 0) {
+                    perror("open stdin");
+                    exit(1);
+                }
+
+                dup2(fd, STDIN_FILENO);
+                close(fd);
+
+            } else if (prev_read != -1) {
+
+                dup2(prev_read, STDIN_FILENO);
+            }
+
+            // ======================
+            // OUTPUT (> ou pipe)
+            // ======================
+            if (seg->stdout_file[0] != '\0') {
+
+                int fd = open(seg->stdout_file,
+                              O_CREAT | O_WRONLY | O_TRUNC,
+                              0666);
+
+                if (fd < 0) {
+                    perror("open stdout");
+                    exit(1);
+                }
+
+                dup2(fd, STDOUT_FILENO);
+                close(fd);
+
+            } else if (i < parsed.num_segmentos - 1) {
+
+                dup2(pipefd[1], STDOUT_FILENO);
+            }
+
+            // ======================
+            // STDERR (2>)
+            // ======================
+            if (seg->stderr_file[0] != '\0') {
+
+                int fd = open(seg->stderr_file,
+                              O_CREAT | O_WRONLY | O_TRUNC,
+                              0666);
+
+                if (fd < 0) {
+                    perror("open stderr");
+                    exit(1);
+                }
+
+                dup2(fd, STDERR_FILENO);
+                close(fd);
+            }
+
+            // ======================
+            // FECHAR FDs
+            // ======================
+            if (prev_read != -1)
+                close(prev_read);
+
+            if (i < parsed.num_segmentos - 1) {
+                close(pipefd[0]);
+                close(pipefd[1]);
+            }
+
+            // ======================
+            // ARGV
+            // ======================
+            char *argv[ARGS_LIM + 1];
+
+            for (int j = 0; j < seg->num_args; j++)
+                argv[j] = seg->args[j];
+
+            argv[seg->num_args] = NULL;
+
+            if (argv[0] == NULL) {
+                fprintf(stderr, "Erro: comando vazio\n");
+                exit(1);
+            }
+
+            execvp(argv[0], argv);
+            perror("execvp");
+            exit(1);
+        }
+
+        // ======================
+        // PAI
+        // ======================
+        if (prev_read != -1)
+            close(prev_read);
+
+        if (i < parsed.num_segmentos - 1) {
+            close(pipefd[1]);
+            prev_read = pipefd[0];
+        }
+    }
+
+    // =========================
+    // WAIT
+    // =========================
+    int status;
+
+    for (int i = 0; i < parsed.num_segmentos; i++) {
+
+        wait(&status);
+
+        if (WIFEXITED(status)) {
+            if (WEXITSTATUS(status) < 0){
+                printf("[runner] command %d failed\n", p->runnerPid);
+                exit(1);
+            }
+        }
     }
 }
 

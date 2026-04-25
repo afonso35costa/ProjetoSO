@@ -12,7 +12,7 @@ sleep 1
 PIDS=""
 for i in 1 2 3 4 5 6 7 8
 do
-    ../bin/runner -e $i sleep 2 &
+    ../bin/runner -e $i "sleep 2" &
     PIDS="$PIDS $!"
 done
 

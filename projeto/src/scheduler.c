@@ -43,13 +43,13 @@ Package roundRobin(Scheduler *s, IdQueue *idQueue){
 }
 
 Package lastInFirstOut(Scheduler *s){
-    
+    return dequeue(s->filaEspera);
 }
 
 Package schedPolicy(Scheduler *s, IdQueue *idQueue){
     if (s->policy == FCFS) return firstComeFirstServe(s);
-    else return roundRobin(s, idQueue);
-    // else return lastInFirstOut(s);
+    else if (s->policy == RR) return roundRobin(s, idQueue);
+    else return lastInFirstOut(s);
 }
 
 

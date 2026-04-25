@@ -59,38 +59,54 @@ int get_userId(Comando *c){
 }
 
 ComandoParsed parseComando(Comando *cmd) {
+
     ComandoParsed parsed;
-    parsed.num_segmentos = 0;
     memset(&parsed, 0, sizeof(ComandoParsed));
 
-    int seg = 0;  // índice do segmento atual
+    int seg = 0;
 
     for (int i = 0; i < cmd->num_args; i++) {
 
         if (strcmp(cmd->args[i], "|") == 0) {
-            // novo segmento
+
             seg++;
-            parsed.num_segmentos++;
 
-        } else if (strcmp(cmd->args[i], ">") == 0) {
-            strcpy(parsed.segmentos[seg].stdout_file, cmd->args[i+1]);
-            i++;  // salta o ficheiro
+            if (seg >= ARGS_LIM)
+                break;
 
-        } else if (strcmp(cmd->args[i], "<") == 0) {
-            strcpy(parsed.segmentos[seg].stdin_file, cmd->args[i+1]);
-            i++;
+        }
 
-        } else if (strcmp(cmd->args[i], "2>") == 0) {
-            strcpy(parsed.segmentos[seg].stderr_file, cmd->args[i+1]);
-            i++;
+        else if (strcmp(cmd->args[i], ">") == 0) {
 
-        } else {
-            // argumento normal — adiciona ao segmento atual
-            strcpy(parsed.segmentos[seg].args[parsed.segmentos[seg].num_args], cmd->args[i]);
-            parsed.segmentos[seg].num_args++;
+            if (i + 1 < cmd->num_args)
+                strcpy(parsed.segmentos[seg].stdout_file, cmd->args[++i]);
+
+        }
+
+        else if (strcmp(cmd->args[i], "<") == 0) {
+
+            if (i + 1 < cmd->num_args)
+                strcpy(parsed.segmentos[seg].stdin_file, cmd->args[++i]);
+
+        }
+
+        else if (strcmp(cmd->args[i], "2>") == 0) {
+
+            if (i + 1 < cmd->num_args)
+                strcpy(parsed.segmentos[seg].stderr_file, cmd->args[++i]);
+
+        }
+
+        else {
+
+            Segmento *s = &parsed.segmentos[seg];
+
+            strcpy(s->args[s->num_args], cmd->args[i]);
+            s->num_args++;
         }
     }
 
-    parsed.num_segmentos++;  // conta o último segmento
+    parsed.num_segmentos = seg + 1;
+
     return parsed;
 }

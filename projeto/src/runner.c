@@ -89,11 +89,6 @@ int main(int argc, char* argv[]){
 
     int temOp = 0;
     Comando comando = criaComando(argc, argv, &temOp);
-    /*
-    if (temOp) {
-        ComandoParsed parsed = parseComando(&comando);
-    }
-        */
 
     if (comando.tipo == CMD_UNKNOWN) {
         printf("Comando desconhecido\n");
@@ -126,6 +121,13 @@ int main(int argc, char* argv[]){
     int fd_resposta_controller = open(fifo_controller_para_runner, O_RDONLY);
     if (comando.tipo == CMD_EXEC){
         pid_t pid_filho = runner_recebePidFilho(fifo_controller_para_runner, fd_resposta_controller);
+
+        if (pid_filho <= 0) {
+            printf("[runner] Resposta do controller mal recebida\n");
+            close(fd_resposta_controller);
+            unlink(fifo_controller_para_runner);
+            exit(1);
+        }
         
         /* FIFO para enviar a mensagem para o filho
         char fifo_runner_para_filho[256];
@@ -140,8 +142,7 @@ int main(int argc, char* argv[]){
         if (pid == 0) {
             // filho executa o comando
             executerMain(&pacote, fd_resposta_controller, temOp);
-            perror("Erro no execvp");
-            _exit(1);
+            _exit(0);
         }
         // pai espera que o filho termine
         int status;
@@ -153,7 +154,7 @@ int main(int argc, char* argv[]){
             int tam_mensagem_fim = sprintf(mensagem_fim, "[runner] command %d finished\n", getpid());
             write(1, mensagem_fim, tam_mensagem_fim);
         }
-        else perror("[runner] command failed\n");
+        else perror("[runner] command failed");
 
         
 

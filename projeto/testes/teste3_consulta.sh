@@ -9,11 +9,11 @@ CONTROLLER_PID=$!
 
 sleep 1
 
-../bin/runner -e 1 sleep 5 &
+../bin/runner -e 1 "sleep 5" &
 R1=$!
-../bin/runner -e 2 sleep 5 &
+../bin/runner -e 2 "sleep 5" &
 R2=$!
-../bin/runner -e 3 echo ola &
+../bin/runner -e 3 "echo ola" &
 R3=$!
 
 sleep 1

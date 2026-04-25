@@ -5,10 +5,9 @@
 #include "hashRR.h"
 
 typedef enum{
-    FCFS = 1, // AINDA A DEFINIR
-    RR = 2, // AINDA A DEFINIR
-    LIFO = 3 // AINDA A DEFINIR
-    // PODEM SER DEFINIDAS MAIS POLITICAS
+    FCFS = 1,
+    RR = 2,
+    LIFO = 3
 } SchedPolicies;
 
 typedef struct {
