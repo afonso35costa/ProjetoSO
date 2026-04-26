@@ -98,7 +98,7 @@ int main(int argc, char* argv[]){
                 if (escalonador.policy == FCFS) enqueue(escalonador.filaEspera, &pacote);
                 else if (escalonador.policy == LIFO) push_head(escalonador.filaEspera, &pacote);
                 else {
-                    Queue *userCmdQueue = get_from_hashRR(escalonador.hashRR, pacote.comando.userId);
+                    /* Queue *userCmdQueue = get_from_hashRR(escalonador.hashRR, pacote.comando.userId);
                     if (userCmdQueue) {
                         printf("Fila do user %d já existe, adicionando comando à fila\n", pacote.comando.userId);
                         enqueue(userCmdQueue, &pacote);
@@ -116,6 +116,18 @@ int main(int argc, char* argv[]){
                         add_to_hashRR(escalonador.hashRR, pacote.comando.userId, userQueue2);
                         userEnqueue(&idQueue, pacote.comando.userId);
                     }
+                    */
+                   Queue *userCmdQueue = get_from_hashRR(escalonador.hashRR, pacote.comando.userId);
+
+                    if (!userCmdQueue) {
+                        userCmdQueue = malloc(sizeof(Queue));
+                        queueInit(userCmdQueue);
+                        add_to_hashRR(escalonador.hashRR, pacote.comando.userId, userCmdQueue);
+                        userEnqueue(&idQueue, pacote.comando.userId);
+                    }
+
+                    enqueue(userCmdQueue, &pacote);
+                    nr_comandos_hash++;
                 }
             }
 
@@ -212,6 +224,14 @@ int main(int argc, char* argv[]){
                 printf("Fifo nome: %s\n", pacote_selecionado.fifo_runner);
 
                 int fd_runner_selecionado = open(pacote_selecionado.fifo_runner, O_WRONLY);
+
+                if (fd_runner_selecionado < 0) {
+                    printf("caminho fifo runner: %s\n", pacote_selecionado.fifo_runner);
+                    perror("FIFO do runner não existe ou já terminou");
+
+                    // NÃO continuar
+                    _exit(0);
+                }
 
                 controller_enviaPidFilho(pacote_selecionado.fifo_runner, pid_corrente_filho, fd_runner_selecionado);
 

@@ -179,7 +179,7 @@ void executaComando(Package *p, int temOp) {
 }
 
 void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, GHashTable *hash, int policy, int fd, IdQueue *idQueue) {
-    if (policy == FCFS) {
+    if (policy == FCFS || policy == LIFO) {
         write(fd, &(fila->size), sizeof(int));
     }
     else if (policy == RR) {
@@ -197,7 +197,7 @@ void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, G
         write(fd, &info, sizeof(InfoComando));
     }
 
-    if (policy == FCFS) {
+    if (policy == FCFS || policy == LIFO) {
             // da fila — estão em espera
         Node *atual = fila->head;
         while (atual != NULL) {

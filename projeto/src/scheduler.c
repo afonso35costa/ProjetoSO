@@ -29,7 +29,7 @@ Package firstComeFirstServe(Scheduler* s){
     return dequeue(s->filaEspera);
 }
 
-Package roundRobin(Scheduler *s, IdQueue *idQueue){
+/* Package roundRobin(Scheduler *s, IdQueue *idQueue){
     printf("Round Robin: idQueue tem %d elementos\n", idQueue->size);
     int userEscolhido = userDequeue(idQueue);
     printf("User escolhido: %d\n", userEscolhido);
@@ -40,6 +40,38 @@ Package roundRobin(Scheduler *s, IdQueue *idQueue){
     Package p = dequeue(q);
 
     return p;  
+}
+*/
+
+Package roundRobin(Scheduler *s, IdQueue *idQueue){
+    printf("Round Robin: idQueue tem %d elementos\n", idQueue->size);
+
+    int userEscolhido = userDequeue(idQueue);
+
+    printf("User escolhido: %d\n", userEscolhido);
+
+    Queue *q = get_from_hashRR(s->hashRR, userEscolhido);
+
+    // 🔴 PROTEÇÃO CRÍTICA
+    if (!q || q->size == 0 || q->head == NULL) {
+        printf("Fila inválida/vazia do user %d\n", userEscolhido);
+
+        // garante consistência
+        remove_from_hashRR(s->hashRR, userEscolhido);
+        return (Package){0};
+    }
+
+    Package p = dequeue(q);
+
+    // 🔴 se ainda há trabalho, re-coloca user no RR
+    if (q->size > 0) {
+        userEnqueue(idQueue, userEscolhido);
+    } else {
+        // cleanup total
+        remove_from_hashRR(s->hashRR, userEscolhido);
+    }
+
+    return p;
 }
 
 Package lastInFirstOut(Scheduler *s){

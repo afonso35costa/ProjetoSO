@@ -122,6 +122,8 @@ int main(int argc, char* argv[]){
     if (comando.tipo == CMD_EXEC){
         pid_t pid_filho = runner_recebePidFilho(fifo_controller_para_runner, fd_resposta_controller);
 
+        printf("Pid filho recebido: %d\n", pid_filho);
+
         if (pid_filho <= 0) {
             printf("[runner] Resposta do controller mal recebida\n");
             close(fd_resposta_controller);

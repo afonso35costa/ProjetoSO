@@ -169,31 +169,31 @@ done
 # TESTE 9 — Políticas: FCFS, RR, LIFO
 # 1 = FCFS, 2 = RR, 3 = LIFO
 # -------------------------------------------------
-# for POLICY in 1 2 3
-# do
-#     clean_env
-#     echo "=== TESTE 9: Política $POLICY ===" | tee "$OUTDIR/teste9_policy${POLICY}.log"
-#     start_controller 1 "$POLICY"
+for POLICY in 1 2 3
+do
+    clean_env
+    echo "=== TESTE 9: Política $POLICY ===" | tee "$OUTDIR/teste9_policy${POLICY}.log"
+    start_controller 1 "$POLICY"
 
-#     $RUNNER -e 1 "sleep 3" >> "$OUTDIR/teste9_policy${POLICY}.log" 2>&1 &
-#     R1=$!
-#     sleep 0.2
-#     $RUNNER -e 2 "echo user2" >> "$OUTDIR/teste9_policy${POLICY}.log" 2>&1 &
-#     R2=$!
-#     sleep 0.2
-#     $RUNNER -e 1 "echo user1_segundo" >> "$OUTDIR/teste9_policy${POLICY}.log" 2>&1 &
-#     R3=$!
-#     sleep 0.2
-#     $RUNNER -e 3 "echo user3" >> "$OUTDIR/teste9_policy${POLICY}.log" 2>&1 &
-#     R4=$!
+    $RUNNER -e 1 "sleep 3" >> "$OUTDIR/teste9_policy${POLICY}.log" 2>&1 &
+    R1=$!
+    sleep 0.2
+    $RUNNER -e 2 "echo user2" >> "$OUTDIR/teste9_policy${POLICY}.log" 2>&1 &
+    R2=$!
+    sleep 0.2
+    $RUNNER -e 1 "echo user1_segundo" >> "$OUTDIR/teste9_policy${POLICY}.log" 2>&1 &
+    R3=$!
+    sleep 0.2
+    $RUNNER -e 3 "echo user3" >> "$OUTDIR/teste9_policy${POLICY}.log" 2>&1 &
+    R4=$!
 
-#     sleep 1
-#     echo "--- CONSULTA DURANTE POLÍTICA $POLICY ---" | tee -a "$OUTDIR/teste9_policy${POLICY}.log"
-#     $RUNNER -c | tee -a "$OUTDIR/teste9_policy${POLICY}.log"
+    sleep 1
+    echo "--- CONSULTA DURANTE POLÍTICA $POLICY ---" | tee -a "$OUTDIR/teste9_policy${POLICY}.log"
+    $RUNNER -c | tee -a "$OUTDIR/teste9_policy${POLICY}.log"
 
-#     wait_runners $R1 $R2 $R3 $R4
-#     stop_controller
-# done
+    wait_runners $R1 $R2 $R3 $R4
+    stop_controller
+done
 
 # -------------------------------------------------
 # TESTE 10 — Carga grande
