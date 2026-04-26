@@ -65,7 +65,8 @@ Package roundRobin(Scheduler *s, IdQueue *idQueue){
 
     // 🔴 se ainda há trabalho, re-coloca user no RR
     if (q->size > 0) {
-        userEnqueue(idQueue, userEscolhido);
+        if (!userInQueue(idQueue, userEscolhido))  // ← ADICIONAR
+            userEnqueue(idQueue, userEscolhido);
     } else {
         // cleanup total
         remove_from_hashRR(s->hashRR, userEscolhido);

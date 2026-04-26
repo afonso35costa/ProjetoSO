@@ -7,29 +7,29 @@ OUTDIR="outputs"
 mkdir -p "$OUTDIR"
 
 clean_env() {
-    rm -f /tmp/runnerToController /tmp/controllerToRunner_* /tmp/runnerTofilho*
-    rm -f infocomandos out.txt err.txt input.txt
+   rm -f /tmp/runnerToController /tmp/controllerToRunner_* /tmp/runnerTofilho*
+   rm -f infocomandos out.txt err.txt input.txt
 }
 
 start_controller() {
-    PAR=$1
-    POLICY=$2
-    echo "A iniciar controller: paralelismo=$PAR politica=$POLICY"
-    $CONTROLLER "$PAR" "$POLICY" > "$OUTDIR/controller_p${PAR}_pol${POLICY}.log" 2>&1 &
-    CONTROLLER_PID=$!
-    sleep 1
+   PAR=$1
+   POLICY=$2
+   echo "A iniciar controller: paralelismo=$PAR politica=$POLICY"
+   $CONTROLLER "$PAR" "$POLICY" > "$OUTDIR/controller_p${PAR}_pol${POLICY}.log" 2>&1 &
+   CONTROLLER_PID=$!
+   sleep 1
 }
 
 stop_controller() {
-    echo "A terminar controller..."
-    $RUNNER -s >> "$OUTDIR/shutdown.log" 2>&1
-    wait $CONTROLLER_PID 2>/dev/null
+   echo "A terminar controller..."
+   $RUNNER -s >> "$OUTDIR/shutdown.log" 2>&1
+   wait $CONTROLLER_PID 2>/dev/null
 }
 
 wait_runners() {
-    for pid in "$@"; do
-        wait "$pid"
-    done
+   for pid in "$@"; do
+       wait "$pid"
+   done
 }
 
 echo "=== TESTES GRANDES DO PROJETO SO ==="
@@ -186,7 +186,6 @@ do
     sleep 0.2
     $RUNNER -e 3 "echo user3" >> "$OUTDIR/teste9_policy${POLICY}.log" 2>&1 &
     R4=$!
-
     sleep 1
     echo "--- CONSULTA DURANTE POLÍTICA $POLICY ---" | tee -a "$OUTDIR/teste9_policy${POLICY}.log"
     $RUNNER -c | tee -a "$OUTDIR/teste9_policy${POLICY}.log"
@@ -194,7 +193,7 @@ do
     wait_runners $R1 $R2 $R3 $R4
     stop_controller
 done
-
+#
 # -------------------------------------------------
 # TESTE 10 — Carga grande
 # -------------------------------------------------
@@ -208,12 +207,13 @@ do
     USER=$(( (i % 3) + 1 ))
     $RUNNER -e "$USER" "sleep 2" >> "$OUTDIR/teste10.log" 2>&1 &
     PIDS+=($!)
+
 done
 
 sleep 1
 echo "--- CONSULTA DURANTE CARGA ---" | tee -a "$OUTDIR/teste10.log"
 $RUNNER -c | tee -a "$OUTDIR/teste10.log"
-
+echo ola1
 wait_runners "${PIDS[@]}"
 stop_controller
 
