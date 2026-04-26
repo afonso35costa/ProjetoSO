@@ -77,6 +77,8 @@ int main(int argc, char* argv[]){
 
         if ((bytes_lidos = read(fd_fifo_controller, &pacote, sizeof(pacote))) > 0){
 
+            printf("READ BYTES = %ld\n", bytes_lidos);
+
             clock_gettime(CLOCK_MONOTONIC, &inicio);
 
             printf("---\nsize fila: %d\n", escalonador.filaEspera->size);
@@ -158,7 +160,7 @@ int main(int argc, char* argv[]){
                 if (escalonador.policy == FCFS) removePackageporFilhoPid(escalonador.arrayPackages, escalonador.executions, pacote.runnerPid);
                 else if (escalonador.policy == RR) {
                     Queue *q = get_from_hashRR(escalonador.hashRR, pacote.comando.userId);
-                    if (!q) {
+                    if (q) {
                         if (q->head != NULL) {
                             userEnqueue(&idQueue, pacote.comando.userId);  // se ainda houver comandos do user, re-enfileirar o userId
                         }

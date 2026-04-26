@@ -1,8 +1,8 @@
 #ifndef COMANDOS
 #define COMANDOS
 
-#define ARGS_LIM 256
-#define ARGS_TAM 128
+#define ARGS_LIM 30
+#define ARGS_TAM 64
 #define SEG_LIM 64
 
 typedef enum {
