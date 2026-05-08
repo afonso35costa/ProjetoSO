@@ -54,7 +54,7 @@ int main(int argc, char* argv[]){
         perror("Erro ao criar fifo_runnerToController");
         return 1;
     }
-    //printf("[controller] FIFO '%s' criado. A esperar por mensagens...\n", caminho_fifo_controller);
+    printf("[controller] FIFO '%s' criado. A esperar por mensagens...\n", caminho_fifo_controller);
 
     int fd_fifo_controller = open(caminho_fifo_controller, O_RDWR);
     if (fd_fifo_controller == -1) {
