@@ -72,19 +72,15 @@ int main(int argc, char* argv[]){
 
     while(!terminar || escalonador.filaEspera->size > 0 || nr_comandos_hash > 0 || escalonador.executions > 0){
 
-        //printf("fila espera: %d, executions: %d\n", escalonador.filaEspera->size, escalonador.executions);
-        // Fazer read tantas vezes quantos os elementos à espera de executar
-        //printf("Waiting for packages... (Executions: %d, FilaEspera: %d, HashRR: %d)\n", escalonador.executions, escalonador.filaEspera->size, nr_comandos_hash);
+        // RECOLHER FILHOS TERMINADOS 
+        while ((pid_recolhido = waitpid(-1, &estado, WNOHANG)) > 0);
+
         // Colocar todos os packages lidos na fila de espera
 
         if ((bytes_lidos = read(fd_fifo_controller, &pacote, sizeof(pacote))) > 0) {
             assert(bytes_lidos == sizeof(pacote));
 
-            //printf("READ BYTES = %ld\n", bytes_lidos);
-
             clock_gettime(CLOCK_MONOTONIC, &inicio);
-
-            //printf("---\nsize fil1: %d\n", escalonador.filaEspera->size);
 
             //Abrir um fifo com o pid do runner
             char caminho_fifo_runner[256];
@@ -93,41 +89,17 @@ int main(int argc, char* argv[]){
             // controller abre fifo para escrita para o runner
             int fd_runner_escrita = open(caminho_fifo_runner, O_WRONLY);
 
-
-            //printf("Info do package\nTipo comando: %d, Status: %d, Args: %s\n", pacote.comando.tipo, pacote.status, pacote.comando.args[1]);
-            //printf("Exec: %d\n", escalonador.executions);
-
             if (pacote.comando.tipo == CMD_EXEC) {
                 if (escalonador.policy == FCFS) enqueue(escalonador.filaEspera, &pacote);
                 else if (escalonador.policy == LIFO) push_head(escalonador.filaEspera, &pacote);
                 else {
-                    /* Queue *userCmdQueue = get_from_hashRR(escalonador.hashRR, pacote.comando.userId);
-                    if (userCmdQueue) {
-                        //printf("Fila do user %d já existe, adicionando comando à fila\n", pacote.comando.userId);
-                        enqueue(userCmdQueue, &pacote);
-                        nr_comandos_hash++;
-                        if (userCmdQueue != NULL && userCmdQueue->head != NULL && !userInQueue(&idQueue, pacote.comando.userId))
-                            userEnqueue(&idQueue, pacote.comando.userId);
-                    }
-                    else {
-                        Queue *userQueue2 = malloc(sizeof(Queue));
-                        queueInit(userQueue2);
-                        enqueue(userQueue2, &pacote);
-                        if (userQueue2->size == 0) //printf("Fila do user %d vazia\n", pacote.comando.userId);
-                        nr_comandos_hash++;
-                        //printf("comando do user %d adicionado à hash\n", pacote.comando.userId);
-                        add_to_hashRR(escalonador.hashRR, pacote.comando.userId, userQueue2);
-                        userEnqueue(&idQueue, pacote.comando.userId);
-                    }
-                    */
-                    //printf("*****comp hash: %d\n", cmd_count_in_all_queues(escalonador.hashRR));
                    Queue *userCmdQueue = get_from_hashRR(escalonador.hashRR, pacote.comando.userId);
 
                     if (!userCmdQueue) {
                         userCmdQueue = malloc(sizeof(Queue));
                         queueInit(userCmdQueue);
                         add_to_hashRR(escalonador.hashRR, pacote.comando.userId, userCmdQueue);
-                        if (!userInQueue(&idQueue, pacote.comando.userId))  // ← ADICIONAR
+                        if (!userInQueue(&idQueue, pacote.comando.userId))
                             userEnqueue(&idQueue, pacote.comando.userId);
                     }
 
@@ -144,12 +116,6 @@ int main(int argc, char* argv[]){
                     close(fd_runner_escrita);
                     _exit(0);
                 }
-                if (waitpid(pid_filho_consulta, &estado, 0) > 0) {
-                    if (!WIFEXITED(estado) || WEXITSTATUS(estado) != 0) {
-                        perror("Erro a receber status da consulta");
-                        return 1;
-                    }
-                }
 
             }
 
@@ -164,7 +130,6 @@ int main(int argc, char* argv[]){
             }
 
             else if (pacote.comando.tipo == CMD_FIM) {
-                //printf("CMD_FIM recebido do runner %d para o user %d\n", pacote.runnerPid, pacote.comando.userId);
                 // Escrever em ficheiro e contar tempo de execução
                 clock_gettime(CLOCK_MONOTONIC, &fim);
                 tempo_execucao = (fim.tv_sec - inicio.tv_sec) + (fim.tv_nsec - inicio.tv_nsec) / 1e9;
@@ -183,22 +148,14 @@ int main(int argc, char* argv[]){
                         if (!userInQueue(&idQueue, pacote.comando.userId))  // ← ADICIONAR
                             userEnqueue(&idQueue, pacote.comando.userId);
                     }
-                    //printf("CMD_FIM user %d → q=%p, head=%p\n", pacote.comando.userId, q, q ? q->head : NULL);
                 }
                 escalonador.executions--;
             }
         
         }
 
-        //printf("afonso\n");
-
-        // RECOLHER FILHOS TERMINADOS 
-        while ((pid_recolhido = waitpid(-1, &estado, WNOHANG)) > 0);
-
         // Realizar o escalonamento tendo em conta o limite de comandos em paralelo
 
-        //printf("executions: %d e tamanho : %d\n", escalonador.executions, escalonador.filaEspera->size);
-        //printf("debug hash: %d\n", cmd_count_in_all_queues(escalonador.hashRR));
         while (escalonador.executions < escalonador.comandosParalelo && (escalonador.filaEspera->size > 0 || nr_comandos_hash > 0)) {
 
             printf("nr execucoes :%d\n", escalonador.executions);
@@ -213,57 +170,16 @@ int main(int argc, char* argv[]){
 
                 pid_t pid_corrente_filho = getpid();
 
-                /* Filho do controller cria FIFO para enviar autorizacao ao runner para executar
-                char caminho_fifo_filho[256];
-                s//printf(caminho_fifo_filho, "/tmp/runnerTofilho%d", pid_corrente_filho);
-
-                unlink(caminho_fifo_filho); // Se já existir, apaga antes de criar
-                if (mkfifo(caminho_fifo_filho, 0666) < 0) {
-                    perror("Erro ao criar FIFO do runner para o filho");
-                    exit(1);
-                }
-                */
-
-
                 // Processo filho envia o seu pid para o runner saber que pode executar o comando
-
-                //printf("Fifo nome: %s\n", pacote_selecionado.fifo_runner);
 
                 int fd_runner_selecionado = open(pacote_selecionado.fifo_runner, O_WRONLY);
 
                 if (fd_runner_selecionado < 0) {
-                    //printf("caminho fifo runner: %s\n", pacote_selecionado.fifo_runner);
-                    //printf("FIFO do runner não existe ou já terminou, %d, %s", __LINE__, __FILE__);
-
-                    // NÃO continuar
                     _exit(0);
                 }
 
                 controller_enviaPidFilho(pacote_selecionado.fifo_runner, pid_corrente_filho, fd_runner_selecionado);
-
-
                 close(fd_runner_selecionado);
-
-                /* Processo filho abre fifo para ler a resposta do runner
-
-                int fd_leitura_filho = open(caminho_fifo_filho, O_RDONLY);
-
-                //printf("bbbb\n");
-                
-                pid_t pid_resposta_runner;
-                if (read(fd_leitura_filho, &pid_resposta_runner, sizeof(pid_t)) > 0) {
-                    //printf("aaaa\n");
-                    clock_gettime(CLOCK_MONOTONIC, &fim);
-                    tempo_execucao = (fim.tv_sec - inicio.tv_sec) + (fim.tv_nsec - inicio.tv_nsec) / 1e9;
-                    InfoComando info = {
-                        pacote_selecionado.runnerPid,
-                        pacote_selecionado.comando.userId,
-                        tempo_execucao,
-                    };
-                    escreveInfoComandosEmFicheiro (info, CMDFILE);
-                }
-                */
-
                 _exit(0);
             }
 
@@ -272,17 +188,15 @@ int main(int argc, char* argv[]){
                 pacote_selecionado.filhoPid = pid_filho;
 
                 addPackageArray(escalonador.arrayPackages, escalonador.executions, &pacote_selecionado);
-                //printf("***** INC\n");
 
                 escalonador.executions++;
             }
-            //printf("Executions nr : %d\n", escalonador.executions);
         }
     }
 
     write(fd_pacote_termina, "ADEUS", 5);
-    //close(fd_fifo_controller);
-    //unlink(caminho_fifo_controller);
+    close(fd_fifo_controller);
+    unlink(caminho_fifo_controller);
 
     return 0;
 }

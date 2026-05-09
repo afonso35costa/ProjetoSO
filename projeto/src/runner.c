@@ -13,14 +13,14 @@
 void runner_enviaPackage (const char* fifo_controller_para_runner, Package *pacote, int fd_para_controller) {
     
     if (fd_para_controller < 0) {
-        //printf("[runner] Controller encerrado ou prestes a encerrar\n");
+        printf("[runner] Controller encerrado ou prestes a encerrar\n");
         unlink(fifo_controller_para_runner);
         exit(1);
     }
 
     ssize_t escrito = write(fd_para_controller, pacote, sizeof(Package));
     if (escrito != sizeof(Package)) {
-        //printf("[runner] Erro ao enviar package\n");
+        printf("[runner] Erro ao enviar package\n");
         close(fd_para_controller);
         unlink(fifo_controller_para_runner);
         exit(1);
@@ -34,7 +34,7 @@ void runner_enviaPackage (const char* fifo_controller_para_runner, Package *paco
 
 pid_t runner_recebePidFilho (const char* fifo_controller_para_runner, int fd_resposta_controller){
     if (fd_resposta_controller < 0){
-        //printf("Erro a abrir fifo do controller\n");
+        printf("Erro a abrir fifo do controller\n");
         unlink(fifo_controller_para_runner);
         exit(1);
     }
@@ -42,10 +42,8 @@ pid_t runner_recebePidFilho (const char* fifo_controller_para_runner, int fd_res
     pid_t pid_filho;
     int n = read(fd_resposta_controller, &pid_filho, sizeof(pid_filho));
     if (n < 0){
-        //printf("[runner] Erro ao receber pid do controller\n");
+        printf("[runner] Erro ao receber pid do controller\n");
     }
-    //if (n == 0) //printf("O controller está a encerrar, comando não executável\n");
-    //printf("Pid filho: %d\n", pid_filho);
     return pid_filho;
 }
 
@@ -63,11 +61,9 @@ void runner_avisaFim (const char* fifo_controller_para_runner, int fd_para_filho
     cmd_fim.args[0][0] = '\0';
     Package pacote_fim;
     package_init(&pacote_fim, &cmd_fim);
-    //printf("Enviando mensagem de término para o controller...\n");
 
     ssize_t size = write(fd_para_filho, &pacote_fim, sizeof(pacote_fim));
     if (size != sizeof(Package)) {
-        //printf("[runner] Erro ao enviar mensagem de término\n");
         close(fd_para_filho);
         unlink(fifo_controller_para_runner);
         exit(1);
@@ -78,7 +74,6 @@ int main(int argc, char* argv[]){
     //mensagem de debug
     char debug[256];
     if (getcwd(debug, sizeof(debug)) != NULL) {
-        //printf("[DEBUG]: Servidor a correr no diretório: %s\n", debug);
     } else {
         perror("[DEBUG]: Erro ao obter o diretório atual (getcwd)");
     }
@@ -123,22 +118,12 @@ int main(int argc, char* argv[]){
     if (comando.tipo == CMD_EXEC){
         pid_t pid_filho = runner_recebePidFilho(fifo_controller_para_runner, fd_resposta_controller);
 
-        //printf("Pid filho recebido: %d\n", pid_filho);
-
         if (pid_filho <= 0) {
-            //printf("[runner] Resposta do controller mal recebida\n");
+            printf("[runner] Resposta do controller mal recebida\n");
             close(fd_resposta_controller);
             unlink(fifo_controller_para_runner);
             exit(1);
         }
-        
-        /* FIFO para enviar a mensagem para o filho
-        char fifo_runner_para_filho[256];
-        sn//printf(fifo_runner_para_filho, sizeof(fifo_runner_para_filho), "/tmp/runnerTofilho%d", pid_filho);
-        
-        int fd_para_filho = open(fifo_runner_para_filho, O_WRONLY);
-
-        */
 
         //Executar o comando
         pid_t pid = fork();
@@ -171,7 +156,7 @@ int main(int argc, char* argv[]){
         char buf[6];
         int n = read(fd_resposta_controller, &buf, 5);
         if (n > 0) {
-            //printf("[runner] controller exited.\n");
+            printf("[runner] controller exited.\n");
         }
         else perror("Erro a ler término");
     }

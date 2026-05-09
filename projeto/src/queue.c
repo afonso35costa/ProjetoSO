@@ -33,19 +33,6 @@ void push_head(Queue *q, Package *pkg) {
     q->size++;
 }
 
-/* Package dequeue(Queue *q) {
-    printf("Dequeue: fila tem %d elementos\n", q->size);
-    Node   *tmp = q->head;
-    Package pkg = tmp->pkg;
-    q->head = q->head->next;
-    if (q->head == NULL)
-        q->tail = NULL;
-    free(tmp);
-    q->size--;
-    return pkg;
-}
-*/
-
 Package dequeue(Queue *q) {
     if (!q || !q->head) {
         printf("DEQUEUE em fila inválida\n");
