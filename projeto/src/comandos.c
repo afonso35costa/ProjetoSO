@@ -10,6 +10,19 @@ TipoComando verificaTipo(char *tipo) {
     else return CMD_UNKNOWN;
 }
 
+/*
+ * criaComando
+ * ----------------
+ * Monta uma estrutura Comando a partir dos argumentos passados ao runner.
+ * Entrada:
+ *  - argc, argv: argumentos da linha de comando
+ *  - temOperadores: ponteiro para inteiro que será marcado se existirem operadores (|, >, <, 2>)
+ * Saída:
+ *  - retorna um Comando preenchido (tipo, userId e args)
+ * Efeitos colaterais:
+ *  - escreve o número de argumentos em cmd.num_args
+ *  - modifica *temOperadores para 1 caso sejam encontrados operadores
+ */
 Comando criaComando(int argc, char *argv[], int *temOperadores) {
     Comando cmd;
     cmd.num_args = 0;
@@ -46,18 +59,47 @@ TipoComando get_tipo(Comando *c){
     return c->tipo;
 }
 
+/*
+ * get_numArgs
+ * -----------
+ * Retorna o número de argumentos armazenados num Comando.
+ */
 int get_numArgs(Comando *c){
     return c->num_args;
 }
 
+/*
+ * get_arg_porIndice
+ * ------------------
+ * Retorna o ponteiro para a string do argumento na posição index.
+ * Nota: não valida index; caller deve garantir bounds.
+ */
 char* get_arg_porIndice(Comando *c, int index){
     return c->args[index];
 }
 
+/*
+ * get_userId
+ * ----------
+ * Devolve o userId associado ao comando.
+ */
 int get_userId(Comando *c){
     return c->userId;
 }
 
+/*
+ * parseComando
+ * ------------
+ * Analisa a lista de argumentos de um Comando e constrói uma
+ * representação dividida em segmentos (para pipelines) com ficheiros
+ * de stdin/stdout/stderr quando presentes.
+ * Entrada:
+ *  - cmd: Comando preenchido com args
+ * Saída:
+ *  - ComandoParsed com segmentos preenchidos
+ * Efeitos:
+ *  - identifica operadores: |, <, >, 2>
+ */
 ComandoParsed parseComando(Comando *cmd) {
 
     ComandoParsed parsed;

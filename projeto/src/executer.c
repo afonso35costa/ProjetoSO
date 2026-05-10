@@ -18,9 +18,7 @@ void executaComando(Package *p, int temOp) {
                      p->runnerPid);
     write(1, buffer2, n2);
 
-    // =========================
-    // CASO SIMPLES (sem pipes)
-    // =========================
+    // CASO SIMPLES 
     if (!temOp) {
 
         char *argv[ARGS_LIM + 1];
@@ -35,9 +33,7 @@ void executaComando(Package *p, int temOp) {
         exit(1);
     }
 
-    // =========================
     // PIPELINE
-    // =========================
     ComandoParsed parsed = parseComando(c);
 
     int prev_read = -1;
@@ -58,9 +54,7 @@ void executaComando(Package *p, int temOp) {
 
         if (pid == 0) {
 
-            // ======================
             // INPUT (< ou pipe)
-            // ======================
             if (seg->stdin_file[0] != '\0') {
 
                 int fd = open(seg->stdin_file, O_RDONLY);
@@ -77,9 +71,8 @@ void executaComando(Package *p, int temOp) {
                 dup2(prev_read, STDIN_FILENO);
             }
 
-            // ======================
             // OUTPUT (> ou pipe)
-            // ======================
+
             if (seg->stdout_file[0] != '\0') {
 
                 int fd = open(seg->stdout_file,
@@ -99,9 +92,7 @@ void executaComando(Package *p, int temOp) {
                 dup2(pipefd[1], STDOUT_FILENO);
             }
 
-            // ======================
             // STDERR (2>)
-            // ======================
             if (seg->stderr_file[0] != '\0') {
 
                 int fd = open(seg->stderr_file,
@@ -117,9 +108,7 @@ void executaComando(Package *p, int temOp) {
                 close(fd);
             }
 
-            // ======================
             // FECHAR FDs
-            // ======================
             if (prev_read != -1)
                 close(prev_read);
 
@@ -128,9 +117,7 @@ void executaComando(Package *p, int temOp) {
                 close(pipefd[1]);
             }
 
-            // ======================
             // ARGV
-            // ======================
             char *argv[ARGS_LIM + 1];
 
             for (int j = 0; j < seg->num_args; j++)
@@ -148,9 +135,7 @@ void executaComando(Package *p, int temOp) {
             exit(1);
         }
 
-        // ======================
         // PAI
-        // ======================
         if (prev_read != -1)
             close(prev_read);
 
@@ -160,9 +145,7 @@ void executaComando(Package *p, int temOp) {
         }
     }
 
-    // =========================
     // WAIT
-    // =========================
     int status;
 
     for (int i = 0; i < parsed.num_segmentos; i++) {
@@ -177,7 +160,20 @@ void executaComando(Package *p, int temOp) {
         }
     }
 }
-
+/*
+ * controller_enviaInfoComandos
+ * ----------------------------
+ * Envia para o runner as informações necessárias para a consulta de
+ * comandos: quantos estão em execução e quais estão na fila/estruturas.
+ * Parâmetros:
+ *  - array: array de Packages em execução
+ *  - executions: número de packages em execução
+ *  - fila: fila de espera (FCFS/LIFO)
+ *  - hash: tabela de filas por utilizador (RR)
+ *  - policy: política de escalonamento (FCFS/RR/LIFO)
+ *  - fd: descritor do FIFO para onde escrever as informações
+ *  - idQueue: fila de IDs de utilizadores (apenas para RR)
+ */
 void controller_enviaInfoComandos(Package *array, int executions, Queue *fila, GHashTable *hash, int policy, int fd, IdQueue *idQueue) {
     if (policy == FCFS || policy == LIFO) {
         write(fd, &(fila->size), sizeof(int));
@@ -276,7 +272,14 @@ void consultaComandos(int fd){
         write(1, &cmd2, n2);
     }
 }
-
+/*
+ * executerMain
+ * ------------
+ * Dispatcher para executar o tipo correto de ação consoante o pacote:
+ *  - executa comandos (-e)
+ *  - envia a lista de execução e fila para o runner (-c)
+ *  - mostra mensagem de desligamento para -s
+ */
 void executerMain(Package *p, int fd, int temOp){
     Comando *c = &p->comando;
     TipoComando tipo = c->tipo;

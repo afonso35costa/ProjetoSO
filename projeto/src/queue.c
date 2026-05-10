@@ -9,6 +9,14 @@ void queueInit (Queue *q){
     q->size = 0;
 }
 
+/*
+ * enqueue
+ * -------
+ * Adiciona um Package ao final da fila.
+ * Parâmetros:
+ *  - q: ponteiro para a Queue
+ *  - pkg: Package a inserir
+ */
 void enqueue(Queue *q, Package *pkg) {
     Node *novo = malloc(sizeof(Node));
     novo->pkg  = *pkg;
@@ -23,6 +31,11 @@ void enqueue(Queue *q, Package *pkg) {
     q->size++;
 }
 
+/*
+ * push_head
+ * ---------
+ * Insere um Package no início da fila (usado para LIFO).
+ */
 void push_head(Queue *q, Package *pkg) {
     Node *novo = malloc(sizeof(Node));
     novo->pkg  = *pkg;
@@ -33,6 +46,12 @@ void push_head(Queue *q, Package *pkg) {
     q->size++;
 }
 
+/*
+ * dequeue
+ * -------
+ * Remove e retorna o primeiro Package da fila. Se a fila estiver vazia
+ * retorna um Package com zero inicializado.
+ */
 Package dequeue(Queue *q) {
     if (!q || !q->head) {
         printf("DEQUEUE em fila inválida\n");
@@ -60,6 +79,11 @@ void idQueueInit (IdQueue *q){
     q->size = 0;
 }
 
+/*
+ * userEnqueue
+ * -----------
+ * Enfileira um user_id na IdQueue (usada pela política RR).
+ */
 void userEnqueue(IdQueue *q, int user_id) {
     UserNode *novo = malloc(sizeof(UserNode));
     novo->user_id  = user_id;
@@ -74,6 +98,11 @@ void userEnqueue(IdQueue *q, int user_id) {
     q->size++;
 }
 
+/*
+ * userDequeue
+ * -----------
+ * Remove e retorna o primeiro user_id da IdQueue.
+ */
 int userDequeue(IdQueue *q) {
     UserNode *tmp = q->head;
     int id = tmp->user_id;
@@ -85,6 +114,11 @@ int userDequeue(IdQueue *q) {
     return id;
 }
 
+/*
+ * userInQueue
+ * -----------
+ * Verifica se um dado userId já está presente na IdQueue.
+ */
 int userInQueue(IdQueue *q, int userId) {
     UserNode *tmp = q->head;
     while (tmp != NULL) {

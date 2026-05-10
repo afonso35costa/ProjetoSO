@@ -11,7 +11,11 @@
 #include "executer.h"
 
 void runner_enviaPackage (const char* fifo_controller_para_runner, Package *pacote, int fd_para_controller) {
-    
+    // Envia um Package para o controller através do FIFO.
+    // Parâmetros:
+    //  - fifo_controller_para_runner: caminho do FIFO usado pelo runner
+    //  - pacote: Package a enviar
+    //  - fd_para_controller: descritor de ficheiro aberto para escrita para o controller
     if (fd_para_controller < 0) {
         printf("[runner] Controller encerrado ou prestes a encerrar\n");
         unlink(fifo_controller_para_runner);
@@ -33,6 +37,7 @@ void runner_enviaPackage (const char* fifo_controller_para_runner, Package *paco
 }
 
 pid_t runner_recebePidFilho (const char* fifo_controller_para_runner, int fd_resposta_controller){
+    // Lê o PID do filho enviado pelo controller através do FIFO de resposta.
     if (fd_resposta_controller < 0){
         printf("Erro a abrir fifo do controller\n");
         unlink(fifo_controller_para_runner);
@@ -48,6 +53,8 @@ pid_t runner_recebePidFilho (const char* fifo_controller_para_runner, int fd_res
 }
 
 void runner_avisaFim (const char* fifo_controller_para_runner, int fd_para_filho, int userId){
+    // Envia sinal de fim (CMD_FIM) para o controller informando que o
+    // comando terminou. Usa fd_para_filho para escrever o Package de fim.
     if (fd_para_filho < 0) {
         perror("Erro ao abrir fifo do filho para escrita");
         unlink(fifo_controller_para_runner);

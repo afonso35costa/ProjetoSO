@@ -16,6 +16,11 @@
 #include <glib.h>
 
 void controller_enviaPidFilho(const char* caminho_fifo_runner, pid_t pid_filho, int fd_runner){
+    // Envia o PID do filho para o runner através do FIFO especificado.
+    // Parâmetros:
+    // caminho_fifo_runner: caminho do FIFO para o runner.
+    // pid_filho: PID do processo filho a ser enviado.
+    // fd_runner: descritor de arquivo do FIFO aberto para escrita.
     if (fd_runner < 0){
         perror("[controller] erro ao abrir FIFO do runner para enviar autorizacao");
         return;
@@ -29,6 +34,10 @@ void controller_enviaPidFilho(const char* caminho_fifo_runner, pid_t pid_filho, 
 int main(int argc, char* argv[]){
 
     struct timespec inicio, fim;
+    // Função principal do programa que gerencia a execução de comandos.
+    // Parâmetros:
+    // argc: número de argumentos da linha de comando.
+    // argv: vetor de argumentos da linha de comando.
     double tempo_execucao;
 
 
